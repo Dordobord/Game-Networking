@@ -4,6 +4,7 @@ using UnityEngine;
 public class PlayerSpawnManager : NetworkBehaviour
 {
     private static int nextSpawnIndex;
+
     public override void OnNetworkSpawn()
     {
         if (!IsServer)

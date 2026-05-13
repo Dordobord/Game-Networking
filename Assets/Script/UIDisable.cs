@@ -1,11 +1,11 @@
 using UnityEngine;
 
-public class UIDisable : MonoBehaviour
+public class UiDisable : MonoBehaviour
 {
-    public Canvas mainCanvas;
+    public GameObject buttonParent;
 
-    public void DisableOnStart()
+    public void DisableButtonOnClick()
     {
-        mainCanvas.enabled = false;
+        buttonParent.SetActive(false);
     }
 }

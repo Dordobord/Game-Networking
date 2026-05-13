@@ -17,9 +17,11 @@ GameObject:
   - component: {fileID: 6910734933487594412}
   - component: {fileID: 4091844324709531486}
   - component: {fileID: 7903004262188675080}
+  - component: {fileID: 7416522144544349441}
+  - component: {fileID: 1334743825498318972}
   m_Layer: 0
   m_Name: NetworkPlayer
-  m_TagString: Player
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -244,3 +246,35 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &7416522144544349441
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8481783575352928960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3a17ef0e103604d40b0c659f32d77ca5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::LocalPlayerCameraTarget
+  ShowTopMostFoldoutHeaderGroup: 1
+--- !u!114 &1334743825498318972
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8481783575352928960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36fb6e075b2930749b7d67525010efc3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerColorManager
+  ShowTopMostFoldoutHeaderGroup: 1
+  playerRenderer: {fileID: 4866460656447202722}
+  playerMaterials:
+  - {fileID: 2100000, guid: ea8687c7c189c2042a41661b392ec4f1, type: 2}
+  - {fileID: 2100000, guid: 749a13e81cd0cad478e60dacd1335323, type: 2}
+  - {fileID: 2100000, guid: 17affb2a3a2501048aa69fcd4cf99529, type: 2}
+  - {fileID: 2100000, guid: 2a8096335ed9bfb4aab8590bde9bf3ac, type: 2}
