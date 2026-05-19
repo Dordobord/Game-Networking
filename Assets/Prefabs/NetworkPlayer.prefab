@@ -14,12 +14,14 @@ GameObject:
   - component: {fileID: 283745020569418943}
   - component: {fileID: 2392997316649620604}
   - component: {fileID: 5760553070186625558}
+  - component: {fileID: 7903004262188675080}
   - component: {fileID: 6910734933487594412}
   - component: {fileID: 4091844324709531486}
-  - component: {fileID: 7903004262188675080}
   - component: {fileID: 7416522144544349441}
   - component: {fileID: 1334743825498318972}
-  m_Layer: 0
+  - component: {fileID: 7157655542831640046}
+  - component: {fileID: 4483650873193026201}
+  m_Layer: 6
   m_Name: NetworkPlayer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -171,35 +173,6 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
---- !u!114 &6910734933487594412
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8481783575352928960}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d8ec6664d00d75e44a0ac1b27e78c116, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerController
-  ShowTopMostFoldoutHeaderGroup: 1
-  moveSpeed: 5
-  gravity: -9.81
-  groundedGravity: -2
---- !u!114 &4091844324709531486
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8481783575352928960}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ca5c25d7aa2e13a4c8787eec35c3eb5f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawnManager
-  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &7903004262188675080
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -246,6 +219,35 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!114 &6910734933487594412
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8481783575352928960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d8ec6664d00d75e44a0ac1b27e78c116, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerController
+  ShowTopMostFoldoutHeaderGroup: 1
+  moveSpeed: 5
+  gravity: -9.81
+  groundedGravity: -2
+--- !u!114 &4091844324709531486
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8481783575352928960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca5c25d7aa2e13a4c8787eec35c3eb5f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSpawnManager
+  ShowTopMostFoldoutHeaderGroup: 1
 --- !u!114 &7416522144544349441
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -278,3 +280,40 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 749a13e81cd0cad478e60dacd1335323, type: 2}
   - {fileID: 2100000, guid: 17affb2a3a2501048aa69fcd4cf99529, type: 2}
   - {fileID: 2100000, guid: 2a8096335ed9bfb4aab8590bde9bf3ac, type: 2}
+--- !u!114 &7157655542831640046
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8481783575352928960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c18a12da228e57148a2dfc88701d4cae, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerHealth
+  ShowTopMostFoldoutHeaderGroup: 1
+  maxHealth: 100
+  currentHealth:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 100
+--- !u!114 &4483650873193026201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8481783575352928960}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8500ff8f4b2a9c8469667d6fbc0b92b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetworkPlayerAttack
+  ShowTopMostFoldoutHeaderGroup: 1
+  attackRange: 3
+  damageAmount: 25
+  playerMask:
+    serializedVersion: 2
+    m_Bits: 64
