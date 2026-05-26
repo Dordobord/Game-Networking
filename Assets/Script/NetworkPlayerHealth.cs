@@ -4,6 +4,8 @@ using Unity.Netcode;
 public class NetworkPlayerHealth : NetworkBehaviour
 {
     [SerializeField]private int maxHealth = 100;
+    [SerializeField] private FloatingDamageText floatingDamagePrefab;
+    [SerializeField] private Transform damageTextSpawnPoint;
     //Network Sync Health variable
     public NetworkVariable<int> currentHealth = new NetworkVariable<int>(
         100,
@@ -35,6 +37,9 @@ public class NetworkPlayerHealth : NetworkBehaviour
         if (!IsServer) return;
         currentHealth.Value -= damageAmount;
         currentHealth.Value = Mathf.Clamp(currentHealth.Value, 0, maxHealth);
+
+        ShowDamageClientRpc(damageAmount);
+
         if (currentHealth.Value <= 0)
         {
             Respawn();
@@ -61,6 +66,14 @@ public class NetworkPlayerHealth : NetworkBehaviour
         {
             characterController.enabled = true;
         }
+    }
+
+    [ClientRpc]
+    private void ShowDamageClientRpc(int damageAmount)
+    {
+        FloatingDamageText damageText = Instantiate(floatingDamagePrefab, damageTextSpawnPoint.position, Quaternion.identity);
+
+        damageText.Setup(damageAmount);
     }
 
 }

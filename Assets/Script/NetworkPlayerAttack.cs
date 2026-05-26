@@ -11,7 +11,7 @@ public class NetworkPlayerAttack : NetworkBehaviour
     {
         if (!IsOwner) return;
 
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (Input.GetMouseButtonDown(0))
         {
             RequestAttackServerRpc();
         }
@@ -26,7 +26,7 @@ public class NetworkPlayerAttack : NetworkBehaviour
         {
             if (hit.gameObject == gameObject) continue;
 
-            NetworkPlayerHealth targetHealth = hit.GetComponent<NetworkPlayerHealth>();
+            NetworkPlayerHealth targetHealth = hit.GetComponentInParent<NetworkPlayerHealth>();
             if (targetHealth != null)
             {
                 targetHealth.TakeDamage(damageAmount);
