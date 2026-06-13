@@ -1,43 +1,27 @@
 using UnityEngine;
 using Unity.Netcode;
+
 public class NetworkPlayerAttack : NetworkBehaviour
 {
-    [SerializeField]private float attackRange = 3f;
-    [SerializeField]private int damageAmount = 25;
-    [SerializeField]private LayerMask playerMask;
+    [SerializeField] private GameObject bulletPrefab;
+    [SerializeField] private Transform shootPoint;
 
-
-    void Update()
+    private void Update()
     {
         if (!IsOwner) return;
 
         if (Input.GetMouseButtonDown(0))
         {
-            RequestAttackServerRpc();
+            ShootServerRpc();
         }
     }
 
     [ServerRpc]
-    private void RequestAttackServerRpc()
+    private void ShootServerRpc()
     {
-        Vector3 attackCenter = transform.position + transform.forward;
-        Collider[] hits = Physics.OverlapSphere(attackCenter, attackRange, playerMask);
-        foreach (Collider hit in hits)
-        {
-            if (hit.gameObject == gameObject) continue;
-
-            NetworkPlayerHealth targetHealth = hit.GetComponentInParent<NetworkPlayerHealth>();
-            if (targetHealth != null)
-            {
-                targetHealth.TakeDamage(damageAmount);
-                break;
-            }
-        }
-    }
-
-    public void OnDrawGizmos()
-    {
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(transform.position + transform.forward, attackRange);
+        GameObject bullet = Instantiate(bulletPrefab,shootPoint.position, shootPoint.rotation);
+        Bullet bulletScript = bullet.GetComponent<Bullet>();
+        bulletScript.SetOwner(OwnerClientId);
+        bullet.GetComponent<NetworkObject>().Spawn();
     }
 }

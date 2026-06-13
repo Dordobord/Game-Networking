@@ -10,7 +10,6 @@ public class UIPlayerHealth : NetworkBehaviour
 
     private void Start()
     {
-        // ADDED
         if (!IsOwner)
         {
             gameObject.SetActive(false);

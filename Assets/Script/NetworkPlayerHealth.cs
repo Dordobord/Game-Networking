@@ -3,15 +3,11 @@ using Unity.Netcode;
 
 public class NetworkPlayerHealth : NetworkBehaviour
 {
-    [SerializeField]private int maxHealth = 100;
+    [SerializeField] private int maxHealth = 100;
     [SerializeField] private FloatingDamageText floatingDamagePrefab;
     [SerializeField] private Transform damageTextSpawnPoint;
-    //Network Sync Health variable
-    public NetworkVariable<int> currentHealth = new NetworkVariable<int>(
-        100,
-        NetworkVariableReadPermission.Everyone, //the host client and server can read this variable.
-        NetworkVariableWritePermission.Server //the server can only change this value.
-    );
+
+    public NetworkVariable<int> currentHealth = new NetworkVariable<int>( 100, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     public override void OnNetworkSpawn()
     {
@@ -19,6 +15,7 @@ public class NetworkPlayerHealth : NetworkBehaviour
         {
             currentHealth.Value = maxHealth;
         }
+
         currentHealth.OnValueChanged += OnHealthChanged;
     }
 
@@ -27,53 +24,64 @@ public class NetworkPlayerHealth : NetworkBehaviour
         currentHealth.OnValueChanged -= OnHealthChanged;
     }
 
-    public void OnHealthChanged(int previousValue, int newValue)
+    public void OnHealthChanged(
+        int previousValue,
+        int newValue)
     {
-        Debug.Log($"{gameObject.name} Health Change: {previousValue} -> {newValue}");
+        Debug.Log($"{gameObject.name} Health Change: " + $"{previousValue} -> {newValue}");
     }
 
-    public void TakeDamage(int damageAmount)
+    public bool TakeDamage(int damageAmount)
     {
-        if (!IsServer) return;
+        if (!IsServer)
+            return false;
+
         currentHealth.Value -= damageAmount;
-        currentHealth.Value = Mathf.Clamp(currentHealth.Value, 0, maxHealth);
+        currentHealth.Value =
+            Mathf.Clamp( currentHealth.Value, 0, maxHealth);
 
         ShowDamageClientRpc(damageAmount);
 
         if (currentHealth.Value <= 0)
         {
             Respawn();
+            return true;
         }
+        return false;
     }
 
     public void Respawn()
     {
         currentHealth.Value = maxHealth;
-        GameObject[] spawnPointObjects = GameObject.FindGameObjectsWithTag("Spawnpoint");
+
+        GameObject[] spawnPointObjects = GameObject.FindGameObjectsWithTag("SpawnPoint");
+
         int randomIndex = Random.Range(0, spawnPointObjects.Length);
+
         Transform selectedSpawn = spawnPointObjects[randomIndex].transform;
 
-        CharacterController characterController = GetComponent<CharacterController>();
-        if (characterController != null)
+        CharacterController cc = GetComponent<CharacterController>();
+
+        if (cc != null)
         {
-            characterController.enabled = false;
+            cc.enabled = false;
         }
 
         transform.position = selectedSpawn.position;
-        transform.rotation = selectedSpawn.rotation;    
 
-        if (characterController != null)
+        transform.rotation = selectedSpawn.rotation;
+
+        if (cc != null)
         {
-            characterController.enabled = true;
+            cc.enabled = true;
         }
     }
 
     [ClientRpc]
-    private void ShowDamageClientRpc(int damageAmount)
+    private void ShowDamageClientRpc(
+        int damageAmount)
     {
         FloatingDamageText damageText = Instantiate(floatingDamagePrefab, damageTextSpawnPoint.position, Quaternion.identity);
-
         damageText.Setup(damageAmount);
     }
-
 }

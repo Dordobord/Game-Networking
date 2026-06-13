@@ -38,6 +38,8 @@ public class NetworkPlayerController : NetworkBehaviour
         {
             MovePlayerRpc(movementInput, jumpInput);
         }
+
+        RotateTowardsMouse();
     }
 
     [Rpc(SendTo.Server)]
@@ -57,7 +59,7 @@ public class NetworkPlayerController : NetworkBehaviour
             verticalVelocity += gravity * Time.deltaTime;
         }
 
-        // ADDED
+
         if (characterController.isGrounded && jumpPressed)
         {
             verticalVelocity =
@@ -74,4 +76,32 @@ public class NetworkPlayerController : NetworkBehaviour
 
         characterController.Move(finalMovement * Time.deltaTime);
     }
+
+    [Rpc(SendTo.Server)]
+    private void RotatePlayerServerRpc(Quaternion rotation)
+    {
+        transform.rotation = rotation;
+    }
+    private void RotateTowardsMouse()
+    {
+        Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+        Plane groundPlane = new Plane(Vector3.up, Vector3.zero);
+
+        if (groundPlane.Raycast(ray, out float distance))
+        {
+            Vector3 point = ray.GetPoint(distance);
+
+            Vector3 lookDirection = point - transform.position;
+            lookDirection.y = 0f;
+
+            if (lookDirection != Vector3.zero)
+            {
+                Quaternion targetRot = Quaternion.LookRotation(lookDirection);
+
+                RotatePlayerServerRpc(targetRot);
+            }
+        }
+    }
+    
+    
 }

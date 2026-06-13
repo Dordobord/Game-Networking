@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class TopDownCameraFollow : MonoBehaviour
 {
-    [SerializeField] Vector3 offset = new Vector3(0f, 10f, -8f);
+    [SerializeField] Vector3 offset = new Vector3(0f, 5f, -6f);
     [SerializeField] private float followSpeed;
 
     private Transform target;
