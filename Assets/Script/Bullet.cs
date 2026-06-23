@@ -30,7 +30,7 @@ public class Bullet : NetworkBehaviour
 
     private void DespawnBullet()
     {
-        // ADDED
+
         if (!IsServer)
             return;
 
@@ -63,7 +63,6 @@ public class Bullet : NetworkBehaviour
             }
         }
 
-        // ADDED
         if (IsServer &&
             NetworkObject != null &&
             NetworkObject.IsSpawned)
