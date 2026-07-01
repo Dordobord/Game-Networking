@@ -1,12 +1,11 @@
-using UnityEditor.Rendering.LookDev;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class InputManager : MonoBehaviour
 {
     private PlayerInput _playerInput;
     private PlayerLook look;
     private PlayerInput.OnFootActions onFoot;
+    public PlayerInput.OnFootActions OnFoot => onFoot;
 
     private PlayerMotor motor;
 

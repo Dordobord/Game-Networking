@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "Game Networking.slnx"
+    "dotnet.defaultSolution": "Game-Networking.slnx"
 }
