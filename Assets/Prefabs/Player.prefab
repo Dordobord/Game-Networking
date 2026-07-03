@@ -147,9 +147,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4fbc105b084d264faa26525902d725f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMotor
-  speed: 5
+  walkSpeed: 5
+  sprintSpeed: 10
   gravity: -9.81
   jumpHeight: 3
+  groundCheckPoint: {fileID: 0}
+  groundCheckRadius: 0.2
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 0
+  standHeight: 2
+  crouchHeight: 1
+  crouchSpeed: 8
 --- !u!114 &1037437679863236876
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -193,7 +202,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 17e2a3d7b491e38469755b858c9fd734, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerUI
-  prompText: {fileID: 0}
+  prompText: {fileID: 5019678972707796008, guid: 00e0479546e1bc444afbd366af2936f3, type: 3}
 --- !u!114 &7860496248929978705
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -208,8 +217,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerHealth
   maxHealth: 100
   chipSpeed: 2.5
-  frontHealthBar: {fileID: 0}
-  backHealthBar: {fileID: 0}
+  frontHealthBar: {fileID: 8613963739272176292, guid: 31299ac6cd6f2d349b8e5fd23c678007, type: 3}
+  backHealthBar: {fileID: 476990045892405489, guid: a9a1e87aadec44342bfae4587510fc95, type: 3}
   overlay: {fileID: 0}
   duration: 1
   fadeSpeed: 0.5

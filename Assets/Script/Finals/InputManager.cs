@@ -18,21 +18,16 @@ public class InputManager : MonoBehaviour
         look = GetComponent<PlayerLook>();
 
         onFoot.Jump.performed += ctx => motor.Jump();
-
         onFoot.Crouch.performed += ctx => motor.Crouch();
-        onFoot.Sprint.performed += ctx => motor.Sprint();
+
+        onFoot.Sprint.performed += ctx => motor.Sprint(true);
+        onFoot.Sprint.canceled += ctx => motor.Sprint(false);
     }
 
-    void FixedUpdate()
+    void Update()
     {
-        //tell the playerMotor to move using the value from our movement action
-        motor.ProcessMove(onFoot.Movement.ReadValue<Vector2>());
-    }
-
-    void LateUpdate()
-    {
-        //tell the playerLook to look using the value from our look action
         look.ProcessLook(onFoot.Look.ReadValue<Vector2>());
+        motor.ProcessMove(onFoot.Movement.ReadValue<Vector2>());
     }
 
     void OnEnable()

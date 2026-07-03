@@ -80,6 +80,8 @@ public class LobbyMenuChat : NetworkBehaviour
             ShowJoinCode(joinCode);
             SetStatus("Host started. Share the join code.");
             AddLocalChatMessage("System: Host started.");
+            HideLobbyPanel();
+            HideCursor();
             }
             else
             {
@@ -128,6 +130,8 @@ public class LobbyMenuChat : NetworkBehaviour
             {
                 SetStatus("Client started.");
                 AddLocalChatMessage("System: Client joined.");
+                HideLobbyPanel();
+                HideCursor();
             }
             else
             {
@@ -178,6 +182,20 @@ public class LobbyMenuChat : NetworkBehaviour
         {
             joinCodeText.text = "Join Code: " + joinCode;
         }
+    }
+
+    private void HideLobbyPanel()
+    {
+        if (lobbyPanel != null)
+        {
+            lobbyPanel.SetActive(false);
+        }
+    }
+
+    private void HideCursor()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     private void SetStatus(string message)
