@@ -1,73 +1,29 @@
-using Unity.Netcode;
 using UnityEngine;
 
-public class Bullet : NetworkBehaviour
+public class BulletVisuals : MonoBehaviour
 {
-    private ulong playerId;
+    [SerializeField] private float speed = 150f;
 
-    [SerializeField] private float speed = 20f;
-    [SerializeField] private int damage = 25;
-    [SerializeField] private LayerMask playerMask;
+    private Vector3 targetPoint;
 
-    private Rigidbody rb;
-
-    private void Awake()
+    public void SetTarget(Vector3 point)
     {
-        rb = GetComponent<Rigidbody>();
+        targetPoint = point;
+
+        Destroy(gameObject, 2f);
     }
 
-    public void SetOwner(ulong id)
+    void Update()
     {
-        playerId = id;
-    }
+        transform.position = Vector3.MoveTowards(
+            transform.position,
+            targetPoint,
+            speed * Time.deltaTime
+        );
 
-    public override void OnNetworkSpawn()
-    {
-        rb.linearVelocity = transform.forward * speed;
-
-        Invoke(nameof(DespawnBullet), 5f);
-    }
-
-    private void DespawnBullet()
-    {
-
-        if (!IsServer)
-            return;
-
-        if (NetworkObject != null &&
-            NetworkObject.IsSpawned)
+        if (Vector3.Distance(transform.position, targetPoint) < 0.1f)
         {
-            NetworkObject.Despawn();
-        }
-    }
-
-    private void OnTriggerEnter(Collider other)
-    {
-        if (!IsServer)
-            return;
-
-        if (!other.CompareTag("Player"))
-            return;
-
-        NetworkPlayerHealth health =
-            other.GetComponent<NetworkPlayerHealth>();
-
-        if (health != null)
-        {
-            bool killed =
-                health.TakeDamage(damage);
-
-            if (killed)
-            {
-                GameManager.main.AddPoint(playerId);
-            }
-        }
-
-        if (IsServer &&
-            NetworkObject != null &&
-            NetworkObject.IsSpawned)
-        {
-            NetworkObject.Despawn();
+            Destroy(gameObject);
         }
     }
 }

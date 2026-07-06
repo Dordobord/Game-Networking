@@ -1,26 +1,28 @@
 using UnityEngine;
+using Unity.Netcode;
 
-public class PlayerInteract : MonoBehaviour
+public class PlayerInteraction : NetworkBehaviour
 {
     private Camera cam;
 
-    [SerializeField]private float distance = 3f;
-    [SerializeField]private LayerMask mask;
+    [SerializeField] private float distance = 3f;
+    [SerializeField] private LayerMask mask;
 
-    private PlayerUI playerUI;
-    private InputManager inputManager;
+    private UIPlayer playerUI;
+    private PlayerInputController inputManager;
 
     private string currentPrompt = "";
 
     void Start()
     {
-        cam = GetComponent<PlayerLook>().cam;
-        playerUI = GetComponent<PlayerUI>();
-        inputManager = GetComponent<InputManager>();
+        cam = GetComponent<PlayerLook>()._cam;
+        playerUI = GetComponent<UIPlayer>();
+        inputManager = GetComponent<PlayerInputController>();
     }
 
     void Update()
     {
+        if (!IsOwner) return;
         string newPrompt = "";
 
         Ray ray = new Ray(cam.transform.position, cam.transform.forward);

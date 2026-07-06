@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-public class Target : MonoBehaviour, IDamageable
+public class TargetDummy : MonoBehaviour, IDamageable
 {
     [SerializeField]private float maxHealth = 100f;
     [SerializeField]private float flashTime = 0.15f;

@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(CharacterController))]
-public class PlayerMotor : MonoBehaviour
+public class PlayerMovement : MonoBehaviour
 {
     private CharacterController cc;
 
@@ -15,20 +15,28 @@ public class PlayerMotor : MonoBehaviour
     [SerializeField] private float jumpHeight = 3f;
 
     [Header("Ground Check")]
-    [SerializeField] private Transform groundCheckPoint; // empty GameObject at the character's feet
+    [SerializeField] private Transform groundCheckPoint;
     [SerializeField] private float groundCheckRadius = 0.2f;
     [SerializeField] private LayerMask groundMask;
 
     [Header("Crouch")]
     [SerializeField] private float standHeight = 2f;
     [SerializeField] private float crouchHeight = 1f;
-    [SerializeField] private float crouchSpeed = 8f;
+    [SerializeField] private float crouchTransitionTime = 1f;
+
+    [Header("Crouch Camera")]
+    [SerializeField] private Transform cameraHolder;
+    [SerializeField] private float standCamY = 1f;
+    [SerializeField] private float crouchCamY = 0.9f;
 
     private Vector3 velocity;
     private bool isGrounded;
 
     private bool isCrouching;
     private bool isSprinting;
+
+    private bool lerpCrouch;
+    private float crouchTimer;
 
     void Start()
     {
@@ -38,14 +46,32 @@ public class PlayerMotor : MonoBehaviour
 
     void Update()
     {
-        // Crouch is purely visual/height-based, so it's fine here regardless of script order.
-        HandleCrouch();
+        if (lerpCrouch)
+        {
+            crouchTimer += Time.deltaTime;
+            float p = crouchTimer / crouchTransitionTime;
+            p *= p; // ease in
+
+            float targetHeight = isCrouching ? crouchHeight : standHeight;
+            cc.height = Mathf.Lerp(cc.height, targetHeight, p);
+            cc.center = new Vector3(0f, cc.height / 2f - standHeight / 2f, 0f);
+
+            if (cameraHolder != null)
+            {
+                float targetCamY = isCrouching ? crouchCamY : standCamY;
+                Vector3 camPos = cameraHolder.localPosition;
+                camPos.y = Mathf.Lerp(camPos.y, targetCamY, p);
+                cameraHolder.localPosition = camPos;
+            }
+
+            if (p > 1f)
+            {
+                lerpCrouch = false;
+                crouchTimer = 0f;
+            }
+        }
     }
 
-    // Ground check + gravity now run at the START of ProcessMove(), not in a separate
-    // Update(). This guarantees they're always resolved BEFORE the move is applied on
-    // the same frame, regardless of script execution order between InputManager and
-    // PlayerMotor. That removes the per-frame inconsistency that was causing micro-stutter.
     public void ProcessMove(Vector2 input)
     {
         GroundCheck();
@@ -66,17 +92,12 @@ public class PlayerMotor : MonoBehaviour
 
     void GroundCheck()
     {
-        // CharacterController.isGrounded flickers true/false between frames even on flat
-        // ground, because it only reflects the result of the LAST cc.Move() collision.
-        // A small physics sphere check at the feet is stable and doesn't cause the
-        // velocity.y sawtooth that was making the camera bob.
         if (groundCheckPoint != null)
         {
             isGrounded = Physics.CheckSphere(groundCheckPoint.position, groundCheckRadius, groundMask);
         }
         else
         {
-            // Fallback if you haven't set up a ground check point yet.
             isGrounded = cc.isGrounded;
         }
 
@@ -107,14 +128,7 @@ public class PlayerMotor : MonoBehaviour
     public void Crouch()
     {
         isCrouching = !isCrouching;
-    }
-
-    void HandleCrouch()
-    {
-        float targetHeight = isCrouching ? crouchHeight : standHeight;
-
-        cc.height = Mathf.Lerp(cc.height,targetHeight,crouchSpeed * Time.deltaTime);
-
-        cc.center = new Vector3(0f, cc.height / 2f, 0f);
+        crouchTimer = 0f;
+        lerpCrouch = true;
     }
 }

@@ -8,8 +8,8 @@ public class PlayerCountUI : MonoBehaviour
 
     private void Start()
     {
-        PlayerCount.main.playerCount.OnValueChanged += UpdateUI;
-        UpdateUI(0, PlayerCount.main.playerCount.Value);
+        PlayerRegistry.main.playerCount.OnValueChanged += UpdateUI;
+        UpdateUI(0, PlayerRegistry.main.playerCount.Value);
     }
 
     private void UpdateUI(int oldValue, int newValue)

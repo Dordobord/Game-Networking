@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 
-public class PlayerUI : MonoBehaviour
+public class UIPlayer : MonoBehaviour
 {
     [SerializeField]private TextMeshProUGUI prompText;
 

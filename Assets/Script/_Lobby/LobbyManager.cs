@@ -8,28 +8,40 @@ using Unity.Services.Core;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine;
-public class LobbyMenuChat : NetworkBehaviour
+
+public class LobbyManager : NetworkBehaviour
 {
     [Header("Lobby UI")]
     [SerializeField] private GameObject lobbyPanel;
+    [SerializeField] private GameObject hostButton;
+    [SerializeField] private GameObject joinButton;
+    [SerializeField] private GameObject joinCodeInputObject;
+
     [SerializeField] private TMP_Text joinCodeText;
     [SerializeField] private TMP_InputField joinCodeInput;
     [SerializeField] private TMP_Text statusText;
+
     [Header("Chat UI")]
     [SerializeField] private TMP_Text chatDisplayText;
     [SerializeField] private TMP_InputField chatInputField;
+
     [Header("Relay Settings")]
     [SerializeField] private int maxConnections = 4;
+
     private const string WebGLConnectionType = "wss";
-    
+
     private async void Start()
     {
         await InitializeUnityServices();
+
         SetStatus("Ready.");
+
         if (joinCodeText != null)
         {
-            joinCodeText.text = "Join Code:";
+            joinCodeText.text = "";
+            joinCodeText.gameObject.SetActive(false);
         }
+
         if (chatDisplayText != null)
         {
             chatDisplayText.text = "Chat:";
@@ -50,7 +62,6 @@ public class LobbyMenuChat : NetworkBehaviour
                 await AuthenticationService.Instance.SignInAnonymouslyAsync();
             }
         }
-
         catch (Exception exception)
         {
             SetStatus("Unity Services failed to initialize.");
@@ -63,29 +74,42 @@ public class LobbyMenuChat : NetworkBehaviour
         try
         {
             SetStatus("Creating host...");
+
             await InitializeUnityServices();
-            Allocation allocation = await
-            RelayService.Instance.CreateAllocationAsync(maxConnections);
-            string joinCode = await
-            RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
+            Allocation allocation =
+                await RelayService.Instance.CreateAllocationAsync(maxConnections);
+
+            string joinCode =
+                await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+
             UnityTransport transport =
-            NetworkManager.Singleton.GetComponent<UnityTransport>();
+                NetworkManager.Singleton.GetComponent<UnityTransport>();
+
             transport.UseWebSockets = true;
+
             transport.SetRelayServerData(
-            AllocationUtils.ToRelayServerData(allocation, WebGLConnectionType)
+                AllocationUtils.ToRelayServerData(
+                    allocation,
+                    WebGLConnectionType
+                )
             );
+
             bool started = NetworkManager.Singleton.StartHost();
+
             if (started)
             {
-            ShowJoinCode(joinCode);
-            SetStatus("Host started. Share the join code.");
-            AddLocalChatMessage("System: Host started.");
-            HideLobbyPanel();
-            HideCursor();
+                ShowJoinCode(joinCode);
+                DisableLobbyControls();
+
+                SetStatus("Host started. Share the join code.");
+                AddLocalChatMessage("System: Host started.");
+
+                HideCursor();
             }
             else
             {
-            SetStatus("Failed to start Host.");
+                SetStatus("Failed to start Host.");
             }
         }
         catch (Exception exception)
@@ -100,7 +124,9 @@ public class LobbyMenuChat : NetworkBehaviour
         try
         {
             SetStatus("Joining...");
+
             await InitializeUnityServices();
+
             if (joinCodeInput == null)
             {
                 SetStatus("Join Code Input is missing.");
@@ -108,20 +134,26 @@ public class LobbyMenuChat : NetworkBehaviour
             }
 
             string joinCode = joinCodeInput.text.Trim().ToUpper();
+
             if (string.IsNullOrEmpty(joinCode))
             {
                 SetStatus("Please enter a join code.");
                 return;
             }
 
-            JoinAllocation joinAllocation = await
-            RelayService.Instance.JoinAllocationAsync(joinCode);
+            JoinAllocation joinAllocation =
+                await RelayService.Instance.JoinAllocationAsync(joinCode);
+
             UnityTransport transport =
-            NetworkManager.Singleton.GetComponent<UnityTransport>();
+                NetworkManager.Singleton.GetComponent<UnityTransport>();
+
             transport.UseWebSockets = true;
+
             transport.SetRelayServerData(
-            AllocationUtils.ToRelayServerData(joinAllocation,
-            WebGLConnectionType)
+                AllocationUtils.ToRelayServerData(
+                    joinAllocation,
+                    WebGLConnectionType
+                )
             );
 
             bool started = NetworkManager.Singleton.StartClient();
@@ -130,12 +162,13 @@ public class LobbyMenuChat : NetworkBehaviour
             {
                 SetStatus("Client started.");
                 AddLocalChatMessage("System: Client joined.");
+
                 HideLobbyPanel();
                 HideCursor();
             }
             else
             {
-            SetStatus("Failed to start Client.");
+                SetStatus("Failed to start Client.");
             }
         }
         catch (Exception exception)
@@ -148,19 +181,21 @@ public class LobbyMenuChat : NetworkBehaviour
     public void SendChatMessage()
     {
         if (chatInputField == null)
-        {
-            
-        }
+            return;
 
         string message = chatInputField.text.Trim();
+
         if (string.IsNullOrEmpty(message))
-        {
-            
-        }
+            return;
 
         chatInputField.text = "";
-        string senderName = "Player " + NetworkManager.Singleton.LocalClientId;
-        FixedString128Bytes fixedMessage = senderName + ": " + message;
+
+        string senderName =
+            "Player " + NetworkManager.Singleton.LocalClientId;
+
+        FixedString128Bytes fixedMessage =
+            senderName + ": " + message;
+
         SendChatMessageRpc(fixedMessage);
     }
 
@@ -180,8 +215,21 @@ public class LobbyMenuChat : NetworkBehaviour
     {
         if (joinCodeText != null)
         {
+            joinCodeText.gameObject.SetActive(true);
             joinCodeText.text = "Join Code: " + joinCode;
         }
+    }
+
+    private void DisableLobbyControls()
+    {
+        if (hostButton != null)
+            hostButton.SetActive(false);
+
+        if (joinButton != null)
+            joinButton.SetActive(false);
+
+        if (joinCodeInputObject != null)
+            joinCodeInputObject.SetActive(false);
     }
 
     private void HideLobbyPanel()
@@ -204,15 +252,15 @@ public class LobbyMenuChat : NetworkBehaviour
         {
             statusText.text = message;
         }
+
         Debug.Log(message);
     }
 
     private void AddLocalChatMessage(string message)
     {
         if (chatDisplayText == null)
-        {
-        return;
-        }
+            return;
+
         chatDisplayText.text += "\n" + message;
     }
 }

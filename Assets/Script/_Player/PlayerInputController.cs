@@ -1,20 +1,21 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class InputManager : MonoBehaviour
+public class PlayerInputController : NetworkBehaviour
 {
     private PlayerInput _playerInput;
     private PlayerLook look;
     private PlayerInput.OnFootActions onFoot;
     public PlayerInput.OnFootActions OnFoot => onFoot;
 
-    private PlayerMotor motor;
+    private PlayerMovement motor;
 
     void Awake()
     {
         _playerInput = new PlayerInput();
         onFoot = _playerInput.OnFoot;
 
-        motor = GetComponent<PlayerMotor>();
+        motor = GetComponent<PlayerMovement>();
         look = GetComponent<PlayerLook>();
 
         onFoot.Jump.performed += ctx => motor.Jump();
@@ -26,6 +27,8 @@ public class InputManager : MonoBehaviour
 
     void Update()
     {
+        if (!IsOwner) return;
+        
         look.ProcessLook(onFoot.Look.ReadValue<Vector2>());
         motor.ProcessMove(onFoot.Movement.ReadValue<Vector2>());
     }

@@ -1,9 +1,9 @@
 using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerCount : NetworkBehaviour
+public class PlayerRegistry : NetworkBehaviour
 {
-    public static PlayerCount main;
+    public static PlayerRegistry main;
 
     public NetworkVariable<int> playerCount = new NetworkVariable<int>();
 
