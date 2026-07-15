@@ -45,7 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3749080753
+  GlobalObjectIdHash: 3300353011
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -72,9 +72,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::LobbyMenuChat
   ShowTopMostFoldoutHeaderGroup: 1
   lobbyPanel: {fileID: 0}
+  hostButton: {fileID: 0}
+  joinButton: {fileID: 0}
+  joinCodeInputObject: {fileID: 0}
   joinCodeText: {fileID: 0}
   joinCodeInput: {fileID: 0}
   statusText: {fileID: 0}
+  chatPanel: {fileID: 0}
   chatDisplayText: {fileID: 0}
   chatInputField: {fileID: 0}
+  gameUI: {fileID: 0}
   maxConnections: 4

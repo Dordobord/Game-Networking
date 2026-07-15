@@ -4,13 +4,15 @@ using UnityEngine;
 public class PlayerInputController : NetworkBehaviour
 {
     private PlayerInput _playerInput;
-    private PlayerLook look;
     private PlayerInput.OnFootActions onFoot;
-    public PlayerInput.OnFootActions OnFoot => onFoot;
 
     private PlayerMovement motor;
+    private PlayerLook look;
+    private bool wasChatOpen;
 
-    void Awake()
+    public PlayerInput.OnFootActions OnFoot => onFoot;
+
+    private void Awake()
     {
         _playerInput = new PlayerInput();
         onFoot = _playerInput.OnFoot;
@@ -18,28 +20,51 @@ public class PlayerInputController : NetworkBehaviour
         motor = GetComponent<PlayerMovement>();
         look = GetComponent<PlayerLook>();
 
-        onFoot.Jump.performed += ctx => motor.Jump();
-        onFoot.Crouch.performed += ctx => motor.Crouch();
+        onFoot.Jump.performed += _ => motor.Jump();
+        onFoot.Crouch.performed += _ => motor.Crouch();
 
-        onFoot.Sprint.performed += ctx => motor.Sprint(true);
-        onFoot.Sprint.canceled += ctx => motor.Sprint(false);
+        onFoot.Sprint.performed += _ => motor.Sprint(true);
+        onFoot.Sprint.canceled += _ => motor.Sprint(false);
     }
 
-    void Update()
+    private void Update()
     {
-        if (!IsOwner) return;
-        
+        if (!IsOwner)
+            return;
+
+        bool chatOpen = LobbyManager.IsChatOpen;
+
+        if (chatOpen && !wasChatOpen)
+        {
+            onFoot.Disable();
+        }
+        else if (!chatOpen && wasChatOpen)
+        {
+            onFoot.Enable();
+        }
+
+        wasChatOpen = chatOpen;
+
+        if (chatOpen)
+            return;
+
         look.ProcessLook(onFoot.Look.ReadValue<Vector2>());
         motor.ProcessMove(onFoot.Movement.ReadValue<Vector2>());
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
-        onFoot.Enable();
+        if (_playerInput != null)
+        {
+            onFoot.Enable();
+        }
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
-        onFoot.Disable();
+        if (_playerInput != null)
+        {
+            onFoot.Disable();
+        }
     }
 }

@@ -75,6 +75,20 @@ public class UIPlayerHealth : NetworkBehaviour
     {
         lerpTimer = 0f;
 
+        if (newValue >= maxHealth)
+        {
+            frontHealthBar.fillAmount = 1f;
+            backHealthBar.fillAmount = 1f;
+            backHealthBar.color = Color.blue;
+
+            if (overlay != null)
+            {
+                overlay.color = new Color(overlay.color.r, overlay.color.g, overlay.color.b, 0);
+            }
+
+            return;
+        }
+
         if (newValue < previousValue)
         {
             durationTimer = 0f;

@@ -1,16 +1,38 @@
+using System;
 using TMPro;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
+
+// One entry per connected player. Synced to every client so the
+// scoreboard (Tab) and kill feed can read it directly.
+public struct PlayerScoreData : INetworkSerializable, IEquatable<PlayerScoreData>
+{
+    public ulong ClientId;
+    public FixedString32Bytes PlayerName;
+    public int Kills;
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref ClientId);
+        serializer.SerializeValue(ref PlayerName);
+        serializer.SerializeValue(ref Kills);
+    }
+
+    public bool Equals(PlayerScoreData other)
+    {
+        return ClientId == other.ClientId;
+    }
+}
 
 public class GameManager : NetworkBehaviour
 {
     public static GameManager main;
 
-    [SerializeField] private TMP_Text scoreText;
     [SerializeField] private TMP_Text winnerText;
+    [SerializeField] private int killsToWin = 5;
 
-    private NetworkVariable<int> player1Score = new();
-    private NetworkVariable<int> player2Score = new();
+    public NetworkList<PlayerScoreData> PlayerScores = new NetworkList<PlayerScoreData>();
 
     private bool gameEnded;
 
@@ -21,20 +43,64 @@ public class GameManager : NetworkBehaviour
 
     private void Start()
     {
-        winnerText.text = "";
+        if (winnerText != null)
+            winnerText.text = "";
     }
 
     public override void OnNetworkSpawn()
     {
-        player1Score.OnValueChanged += UpdateScoreUI;
-        player2Score.OnValueChanged += UpdateScoreUI;
+        if (IsServer)
+        {
+            foreach (ulong clientId in NetworkManager.Singleton.ConnectedClientsIds)
+            {
+                AddPlayerEntry(clientId);
+            }
 
-        UpdateScoreUI(0, 0);
+            NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback += HandleClientDisconnected;
+        }
     }
 
-    private void UpdateScoreUI(int oldValue, int newValue)
+    public override void OnNetworkDespawn()
     {
-        scoreText.text = "Player 1: " + player1Score.Value + "\nPlayer 2: " + player2Score.Value;
+        if (IsServer && NetworkManager.Singleton != null)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= HandleClientDisconnected;
+        }
+    }
+
+    private void HandleClientConnected(ulong clientId)
+    {
+        AddPlayerEntry(clientId);
+    }
+
+    private void HandleClientDisconnected(ulong clientId)
+    {
+        for (int i = 0; i < PlayerScores.Count; i++)
+        {
+            if (PlayerScores[i].ClientId == clientId)
+            {
+                PlayerScores.RemoveAt(i);
+                break;
+            }
+        }
+    }
+
+    private void AddPlayerEntry(ulong clientId)
+    {
+        foreach (PlayerScoreData entry in PlayerScores)
+        {
+            if (entry.ClientId == clientId)
+                return; // already registered, don't duplicate
+        }
+
+        PlayerScores.Add(new PlayerScoreData
+        {
+            ClientId = clientId,
+            PlayerName = "Player " + clientId,
+            Kills = 0
+        });
     }
 
     public void AddPoint(ulong attackerId)
@@ -42,40 +108,35 @@ public class GameManager : NetworkBehaviour
         if (!IsServer || gameEnded)
             return;
 
-        if (attackerId == 0)
+        for (int i = 0; i < PlayerScores.Count; i++)
         {
-            player1Score.Value++;
-        }
-        else
-        {
-            player2Score.Value++;
-        }
+            if (PlayerScores[i].ClientId == attackerId)
+            {
+                PlayerScoreData updated = PlayerScores[i];
+                updated.Kills++;
+                PlayerScores[i] = updated; 
 
-        CheckWinner();
-    }
-
-    private void CheckWinner()
-    {
-        if (player1Score.Value >= 5)
-        {
-            EndGameClientRpc("Player 1 Wins!");
-        }
-        else if (player2Score.Value >= 5)
-        {
-            EndGameClientRpc("Player 2 Wins!");
+                CheckWinner(updated);
+                break;
+            }
         }
     }
 
-    private void EndGame(string message)
+    private void CheckWinner(PlayerScoreData scorer)
     {
-        gameEnded = true;
-        EndGameClientRpc(message);
+        if (scorer.Kills >= killsToWin)
+        {
+            gameEnded = true;
+            EndGameClientRpc(scorer.PlayerName.ToString() + " Wins!");
+        }
     }
 
     [ClientRpc]
     private void EndGameClientRpc(string message)
     {
         Debug.Log(message);
-        winnerText.text = message;
+
+        if (winnerText != null)
+            winnerText.text = message;
     }
 }

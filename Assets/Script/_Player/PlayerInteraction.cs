@@ -1,49 +1,89 @@
-using UnityEngine;
 using Unity.Netcode;
+using UnityEngine;
 
 public class PlayerInteraction : NetworkBehaviour
 {
-    private Camera cam;
-
+    [Header("Interaction")]
     [SerializeField] private float distance = 3f;
     [SerializeField] private LayerMask mask;
 
+    private Camera cam;
     private UIPlayer playerUI;
     private PlayerInputController inputManager;
+    private string currentPrompt = string.Empty;
 
-    private string currentPrompt = "";
-
-    void Start()
+    public override void OnNetworkSpawn()
     {
-        cam = GetComponent<PlayerLook>()._cam;
-        playerUI = GetComponent<UIPlayer>();
+        if (!IsOwner)
+            return;
+
+        PlayerLook playerLook = GetComponent<PlayerLook>();
+
+        if (playerLook != null)
+            cam = playerLook._cam;
+
         inputManager = GetComponent<PlayerInputController>();
+        playerUI = FindFirstObjectByType<UIPlayer>();
+
+        if (cam == null)
+            Debug.LogError(
+                "PlayerInteraction: Camera was not found."
+            );
+
+        if (inputManager == null)
+            Debug.LogError(
+                "PlayerInteraction: PlayerInputController was not found."
+            );
+
+        if (playerUI == null)
+            Debug.LogError(
+                "PlayerInteraction: UIPlayer was not found."
+            );
     }
 
-    void Update()
+    private void Update()
     {
-        if (!IsOwner) return;
-        string newPrompt = "";
-
-        Ray ray = new Ray(cam.transform.position, cam.transform.forward);
-
-        if (Physics.Raycast(ray, out RaycastHit hitInfo, distance, mask))
+        if (!IsOwner ||
+            cam == null ||
+            inputManager == null ||
+            playerUI == null)
         {
-            if (hitInfo.collider.TryGetComponent(out Interactable interactable))
-            {
-                newPrompt = interactable.promptMessage;
+            return;
+        }
 
-                if (inputManager.OnFoot.Interact.triggered)
+        string newPrompt = string.Empty;
+
+        Ray ray = new Ray(
+            cam.transform.position,
+            cam.transform.forward
+        );
+
+        if (Physics.Raycast(
+                ray,
+                out RaycastHit hitInfo,
+                distance,
+                mask))
+        {
+            Interactable interactable =
+                hitInfo.collider
+                    .GetComponentInParent<Interactable>();
+
+            if (interactable != null)
+            {
+                newPrompt = interactable.PromptMessage;
+
+                if (inputManager.OnFoot.Interact
+                    .WasPressedThisFrame())
                 {
-                    interactable.BaseInteract();
+                    interactable.BaseInteract(gameObject);
                 }
             }
         }
 
-        if (currentPrompt != newPrompt)
-        {
-            currentPrompt = newPrompt;
-            playerUI.UpdateText(currentPrompt);
-        }
+        if (currentPrompt == newPrompt)
+            return;
+
+        currentPrompt = newPrompt;
+        playerUI.UpdateText(currentPrompt);
     }
 }

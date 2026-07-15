@@ -8,6 +8,8 @@ using Unity.Services.Core;
 using Unity.Services.Relay;
 using Unity.Services.Relay.Models;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.InputSystem;
 
 public class LobbyManager : NetworkBehaviour
 {
@@ -22,19 +24,66 @@ public class LobbyManager : NetworkBehaviour
     [SerializeField] private TMP_Text statusText;
 
     [Header("Chat UI")]
+    [SerializeField] private GameObject chatPanel;
     [SerializeField] private TMP_Text chatDisplayText;
     [SerializeField] private TMP_InputField chatInputField;
+
+    [Header("Gameplay UI")]
+    [SerializeField] private GameObject gameUI;
 
     [Header("Relay Settings")]
     [SerializeField] private int maxConnections = 4;
 
     private const string WebGLConnectionType = "wss";
 
+    // PlayerInputController reads this value so gameplay input is disabled
+    // while the player is typing in the chat input field.
+    public static bool IsChatOpen { get; private set; }
+
+    private bool isChatOpen;
+    private bool servicesReady;
+
     private async void Start()
     {
-        await InitializeUnityServices();
+        // IMPORTANT:
+        // Hide these objects before awaiting Unity Services.
+        // Otherwise they can remain visible while initialization is running.
+        ResetUIToLobbyState();
 
-        SetStatus("Ready.");
+        SetStatus("Initializing Unity Services...");
+
+        servicesReady = await InitializeUnityServices();
+
+        if (servicesReady)
+        {
+            SetStatus("Ready.");
+        }
+    }
+
+    private void ResetUIToLobbyState()
+    {
+        isChatOpen = false;
+        IsChatOpen = false;
+
+        if (lobbyPanel != null)
+        {
+            lobbyPanel.SetActive(true);
+        }
+
+        if (hostButton != null)
+        {
+            hostButton.SetActive(true);
+        }
+
+        if (joinButton != null)
+        {
+            joinButton.SetActive(true);
+        }
+
+        if (joinCodeInputObject != null)
+        {
+            joinCodeInputObject.SetActive(true);
+        }
 
         if (joinCodeText != null)
         {
@@ -46,9 +95,27 @@ public class LobbyManager : NetworkBehaviour
         {
             chatDisplayText.text = "Chat:";
         }
+
+        if (chatInputField != null)
+        {
+            chatInputField.text = "";
+            chatInputField.DeactivateInputField();
+        }
+
+        if (chatPanel != null)
+        {
+            chatPanel.SetActive(false);
+        }
+
+        if (gameUI != null)
+        {
+            gameUI.SetActive(false);
+        }
+
+        ShowCursor();
     }
 
-    private async System.Threading.Tasks.Task InitializeUnityServices()
+    private async System.Threading.Tasks.Task<bool> InitializeUnityServices()
     {
         try
         {
@@ -61,11 +128,14 @@ public class LobbyManager : NetworkBehaviour
             {
                 await AuthenticationService.Instance.SignInAnonymouslyAsync();
             }
+
+            return true;
         }
         catch (Exception exception)
         {
             SetStatus("Unity Services failed to initialize.");
             Debug.LogError(exception);
+            return false;
         }
     }
 
@@ -75,16 +145,36 @@ public class LobbyManager : NetworkBehaviour
         {
             SetStatus("Creating host...");
 
-            await InitializeUnityServices();
+            if (!servicesReady)
+            {
+                servicesReady = await InitializeUnityServices();
+
+                if (!servicesReady)
+                {
+                    return;
+                }
+            }
+
+            if (NetworkManager.Singleton == null)
+            {
+                SetStatus("NetworkManager is missing.");
+                return;
+            }
+
+            UnityTransport transport =
+                NetworkManager.Singleton.GetComponent<UnityTransport>();
+
+            if (transport == null)
+            {
+                SetStatus("Unity Transport is missing.");
+                return;
+            }
 
             Allocation allocation =
                 await RelayService.Instance.CreateAllocationAsync(maxConnections);
 
             string joinCode =
                 await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-
-            UnityTransport transport =
-                NetworkManager.Singleton.GetComponent<UnityTransport>();
 
             transport.UseWebSockets = true;
 
@@ -97,20 +187,23 @@ public class LobbyManager : NetworkBehaviour
 
             bool started = NetworkManager.Singleton.StartHost();
 
-            if (started)
-            {
-                ShowJoinCode(joinCode);
-                DisableLobbyControls();
-
-                SetStatus("Host started. Share the join code.");
-                AddLocalChatMessage("System: Host started.");
-
-                HideCursor();
-            }
-            else
+            if (!started)
             {
                 SetStatus("Failed to start Host.");
+                return;
             }
+
+            // Show these only after the host successfully starts.
+            DisableLobbyControls();
+            HideLobbyPanel();
+            ShowJoinCode(joinCode);
+            ShowChatPanel();
+            ShowGameUI();
+
+            SetStatus("Host started. Share the join code.");
+            AddLocalChatMessage("System: Host started.");
+
+            HideCursor();
         }
         catch (Exception exception)
         {
@@ -123,29 +216,49 @@ public class LobbyManager : NetworkBehaviour
     {
         try
         {
-            SetStatus("Joining...");
-
-            await InitializeUnityServices();
-
             if (joinCodeInput == null)
             {
                 SetStatus("Join Code Input is missing.");
                 return;
             }
 
-            string joinCode = joinCodeInput.text.Trim().ToUpper();
+            string joinCode = joinCodeInput.text.Trim().ToUpperInvariant();
 
-            if (string.IsNullOrEmpty(joinCode))
+            if (string.IsNullOrWhiteSpace(joinCode))
             {
                 SetStatus("Please enter a join code.");
                 return;
             }
 
-            JoinAllocation joinAllocation =
-                await RelayService.Instance.JoinAllocationAsync(joinCode);
+            SetStatus("Joining...");
+
+            if (!servicesReady)
+            {
+                servicesReady = await InitializeUnityServices();
+
+                if (!servicesReady)
+                {
+                    return;
+                }
+            }
+
+            if (NetworkManager.Singleton == null)
+            {
+                SetStatus("NetworkManager is missing.");
+                return;
+            }
 
             UnityTransport transport =
                 NetworkManager.Singleton.GetComponent<UnityTransport>();
+
+            if (transport == null)
+            {
+                SetStatus("Unity Transport is missing.");
+                return;
+            }
+
+            JoinAllocation joinAllocation =
+                await RelayService.Instance.JoinAllocationAsync(joinCode);
 
             transport.UseWebSockets = true;
 
@@ -158,24 +271,93 @@ public class LobbyManager : NetworkBehaviour
 
             bool started = NetworkManager.Singleton.StartClient();
 
-            if (started)
-            {
-                SetStatus("Client started.");
-                AddLocalChatMessage("System: Client joined.");
-
-                HideLobbyPanel();
-                HideCursor();
-            }
-            else
+            if (!started)
             {
                 SetStatus("Failed to start Client.");
+                return;
             }
+
+            // A joining client does not need to see the host's join-code text.
+            HideJoinCode();
+            HideLobbyPanel();
+            ShowChatPanel();
+            ShowGameUI();
+
+            SetStatus("Client started.");
+            AddLocalChatMessage("System: Client joined.");
+
+            HideCursor();
         }
         catch (Exception exception)
         {
             SetStatus("Client failed. Check join code and Console.");
             Debug.LogError(exception);
         }
+    }
+
+    private void Update()
+    {
+        HandleChatToggle();
+    }
+
+    private void HandleChatToggle()
+    {
+        if (chatInputField == null || Keyboard.current == null)
+            return;
+
+        if (chatPanel == null || !chatPanel.activeInHierarchy)
+            return;
+
+        bool enterPressed =
+            Keyboard.current.enterKey.wasPressedThisFrame ||
+            Keyboard.current.numpadEnterKey.wasPressedThisFrame;
+
+        if (!enterPressed)
+            return;
+
+        if (!isChatOpen)
+        {
+            OpenChat();
+        }
+        else
+        {
+            SendChatMessage();
+            CloseChat();
+        }
+    }
+
+    private void OpenChat()
+    {
+        if (chatInputField == null)
+            return;
+
+        isChatOpen = true;
+        IsChatOpen = true;
+
+        ShowCursor();
+
+        chatInputField.text = "";
+        chatInputField.gameObject.SetActive(true);
+        chatInputField.ActivateInputField();
+        chatInputField.Select();
+    }
+
+    private void CloseChat()
+    {
+        isChatOpen = false;
+        IsChatOpen = false;
+
+        if (chatInputField != null)
+        {
+            chatInputField.DeactivateInputField();
+        }
+
+        if (EventSystem.current != null)
+        {
+            EventSystem.current.SetSelectedGameObject(null);
+        }
+
+        HideCursor();
     }
 
     public void SendChatMessage()
@@ -185,10 +367,17 @@ public class LobbyManager : NetworkBehaviour
 
         string message = chatInputField.text.Trim();
 
-        if (string.IsNullOrEmpty(message))
+        if (string.IsNullOrWhiteSpace(message))
             return;
 
         chatInputField.text = "";
+
+        if (NetworkManager.Singleton == null ||
+            !NetworkManager.Singleton.IsListening)
+        {
+            SetStatus("Connect as Host or Client before sending chat.");
+            return;
+        }
 
         string senderName =
             "Player " + NetworkManager.Singleton.LocalClientId;
@@ -213,23 +402,38 @@ public class LobbyManager : NetworkBehaviour
 
     private void ShowJoinCode(string joinCode)
     {
-        if (joinCodeText != null)
-        {
-            joinCodeText.gameObject.SetActive(true);
-            joinCodeText.text = "Join Code: " + joinCode;
-        }
+        if (joinCodeText == null)
+            return;
+
+        joinCodeText.text = "Join Code: " + joinCode;
+        joinCodeText.gameObject.SetActive(true);
+    }
+
+    private void HideJoinCode()
+    {
+        if (joinCodeText == null)
+            return;
+
+        joinCodeText.text = "";
+        joinCodeText.gameObject.SetActive(false);
     }
 
     private void DisableLobbyControls()
     {
         if (hostButton != null)
+        {
             hostButton.SetActive(false);
+        }
 
         if (joinButton != null)
+        {
             joinButton.SetActive(false);
+        }
 
         if (joinCodeInputObject != null)
+        {
             joinCodeInputObject.SetActive(false);
+        }
     }
 
     private void HideLobbyPanel()
@@ -240,10 +444,32 @@ public class LobbyManager : NetworkBehaviour
         }
     }
 
+    private void ShowChatPanel()
+    {
+        if (chatPanel != null)
+        {
+            chatPanel.SetActive(true);
+        }
+    }
+
+    private void ShowGameUI()
+    {
+        if (gameUI != null)
+        {
+            gameUI.SetActive(true);
+        }
+    }
+
     private void HideCursor()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    private void ShowCursor()
+    {
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     private void SetStatus(string message)
@@ -260,6 +486,11 @@ public class LobbyManager : NetworkBehaviour
     {
         if (chatDisplayText == null)
             return;
+
+        if (string.IsNullOrEmpty(chatDisplayText.text))
+        {
+            chatDisplayText.text = "Chat:";
+        }
 
         chatDisplayText.text += "\n" + message;
     }

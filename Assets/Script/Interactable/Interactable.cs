@@ -2,14 +2,22 @@ using UnityEngine;
 
 public abstract class Interactable : MonoBehaviour
 {
-    public string promptMessage;
+    [SerializeField] private string promptMessage;
 
-    public void BaseInteract()
+    protected GameObject CurrentInteractor { get; private set; }
+
+    public string PromptMessage => promptMessage;
+
+    public void BaseInteract(GameObject interactor)
     {
+        CurrentInteractor = interactor;
+
         Interact();
+
+        CurrentInteractor = null;
     }
+
     protected virtual void Interact()
     {
-        
     }
 }
