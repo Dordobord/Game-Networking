@@ -42,6 +42,8 @@ public class PlayerWeaponManager : NetworkBehaviour
         equippedWeaponId.OnValueChanged += OnWeaponChanged;
 
         EquipWeapon(equippedWeaponId.Value);
+
+        UpdateAmmoTextVisibility();
     }
 
     public override void OnNetworkDespawn()
@@ -213,12 +215,18 @@ public class PlayerWeaponManager : NetworkBehaviour
         }
 
         if (weaponId < 0)
+        {
+            UpdateAmmoTextVisibility();
             return;
+        }
 
         Gun weaponPrefab = FindWeaponPrefab(weaponId);
 
         if (weaponPrefab == null)
+        {
+            UpdateAmmoTextVisibility();
             return;
+        }
 
         currentGun = Instantiate(
             weaponPrefab,
@@ -230,8 +238,9 @@ public class PlayerWeaponManager : NetworkBehaviour
         currentGun.transform.localScale = Vector3.one;
 
         currentGun.Initialize(this, ammoText);
-    }
 
+        UpdateAmmoTextVisibility();
+    }
     private Gun FindWeaponPrefab(int weaponId)
     {
         if (availableWeapons == null)
@@ -244,5 +253,13 @@ public class PlayerWeaponManager : NetworkBehaviour
         }
 
         return null;
+    }
+
+    private void UpdateAmmoTextVisibility()
+    {
+        if (ammoText == null)
+            return;
+
+        ammoText.gameObject.SetActive(currentGun != null);
     }
 }
