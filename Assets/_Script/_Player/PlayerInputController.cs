@@ -8,9 +8,10 @@ public class PlayerInputController : NetworkBehaviour
 
     private PlayerMovement motor;
     private PlayerLook look;
-    private bool wasChatOpen;
+    private bool gameplayInputAllowed = true;
 
     public PlayerInput.OnFootActions OnFoot => onFoot;
+    public bool GameplayInputAllowed => gameplayInputAllowed;
 
     private void Awake()
     {
@@ -34,7 +35,8 @@ public class PlayerInputController : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        onFoot.Enable();
+        gameplayInputAllowed = true;
+        RefreshInputState();
         LockCursor();
     }
 
@@ -53,26 +55,18 @@ public class PlayerInputController : NetworkBehaviour
             return;
 
         bool chatOpen = LobbyManager.IsChatOpen || PlayerChat.IsChatOpen;
+        bool shouldProcessInput = gameplayInputAllowed && !chatOpen;
 
-        if (chatOpen && !wasChatOpen)
-        {
-            onFoot.Disable();
-        }
-        else if (!chatOpen && wasChatOpen)
-        {
-            onFoot.Enable();
-        }
+        if (shouldProcessInput != onFoot.enabled)
+            RefreshInputState();
 
-        wasChatOpen = chatOpen;
-
-        if (chatOpen)
+        if (!shouldProcessInput)
         {
             motor.ProcessMove(Vector2.zero);
             return;
         }
 
         look.ProcessLook(onFoot.Look.ReadValue<Vector2>());
-
         motor.ProcessMove(onFoot.Movement.ReadValue<Vector2>());
     }
 
@@ -81,20 +75,31 @@ public class PlayerInputController : NetworkBehaviour
         if (!IsSpawned || !IsOwner)
             return;
 
-        if (enabled)
-        {
-            onFoot.Enable();
-            return;
-        }
+        gameplayInputAllowed = enabled;
+        RefreshInputState();
 
-        onFoot.Disable();
-        motor.Sprint(false);
+        if (!enabled)
+        {
+            motor.Sprint(false);
+            motor.ProcessMove(Vector2.zero);
+        }
+    }
+
+    private void RefreshInputState()
+    {
+        bool chatOpen = LobbyManager.IsChatOpen || PlayerChat.IsChatOpen;
+        bool shouldEnable = IsSpawned && IsOwner && gameplayInputAllowed && !chatOpen;
+
+        if (shouldEnable)
+            onFoot.Enable();
+        else
+            onFoot.Disable();
     }
 
     private void OnEnable()
     {
         if (IsSpawned && IsOwner)
-            onFoot.Enable();
+            RefreshInputState();
     }
 
     private void OnDisable()

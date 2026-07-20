@@ -2,21 +2,19 @@ using UnityEngine;
 
 public class Crate : Interactable
 {
-    [SerializeField]private GameObject crate;
-    private bool crateOpen;
-    private bool isAnimating;
+    [SerializeField] private NetworkCrate networkCrate;
 
     protected override void Interact()
     {
-        if (isAnimating) return;
+        if (networkCrate == null || networkCrate.IsOpen)
+            return;
 
-        isAnimating = true;
-        crateOpen = !crateOpen;
-        crate.GetComponent<Animator>().SetBool("IsOpen", crateOpen);
+        networkCrate.RequestOpen();
     }
 
+    // Called by an Animation Event at the end of CrateOpen.
     public void FinishAnimation()
     {
-        isAnimating = false;
+        networkCrate?.FinishOpenAnimation();
     }
 }

@@ -17,7 +17,6 @@ public class PlayerChat : NetworkBehaviour
     public static bool IsChatOpen { get; private set; }
 
     private static PlayerChat localPlayerChat;
-
     private PlayerInputController inputController;
 
     public override void OnNetworkSpawn()
@@ -63,6 +62,9 @@ public class PlayerChat : NetworkBehaviour
         if (!IsOwner || Keyboard.current == null)
             return;
 
+        if (inputController != null && !inputController.GameplayInputAllowed)
+            return;
+
         bool enterPressed =
             Keyboard.current.enterKey.wasPressedThisFrame ||
             Keyboard.current.numpadEnterKey.wasPressedThisFrame;
@@ -86,7 +88,6 @@ public class PlayerChat : NetworkBehaviour
             return;
 
         IsChatOpen = true;
-        inputController?.SetGameplayInputEnabled(false);
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -100,7 +101,6 @@ public class PlayerChat : NetworkBehaviour
     private void CloseChat()
     {
         IsChatOpen = false;
-        inputController?.SetGameplayInputEnabled(true);
 
         if (chatInputField != null)
         {
@@ -114,6 +114,14 @@ public class PlayerChat : NetworkBehaviour
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    public void CloseForRespawn()
+    {
+        if (!IsOwner || !IsChatOpen)
+            return;
+
+        CloseChat();
     }
 
     private void SendCurrentMessage()

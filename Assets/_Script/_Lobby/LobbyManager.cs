@@ -180,6 +180,7 @@ public class LobbyManager : NetworkBehaviour
 
                 if (i > 0)
                     playerListText.text += "\n";
+                    
                 playerListText.text +=  $"Player {clientId}{hostLabel}";
             }
         }
