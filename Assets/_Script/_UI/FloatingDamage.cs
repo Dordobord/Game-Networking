@@ -50,13 +50,6 @@ public class FloatingDamage : MonoBehaviour
             Mathf.SmoothStep(0f, 1f, t)
         );
 
-        // Always face the camera
-        if (cam != null)
-        {
-            transform.LookAt(cam.transform);
-            transform.Rotate(0f, 180f, 0f);
-        }
-
         // Fade out during the second half
         if (t >= fadeStart)
         {
@@ -71,5 +64,14 @@ public class FloatingDamage : MonoBehaviour
         {
             Destroy(gameObject);
         }
+    }
+
+    private void LateUpdate()
+    {
+        if (cam == null || !cam.isActiveAndEnabled)
+            cam = Camera.main;
+
+        if (cam != null)
+            transform.rotation = cam.transform.rotation;
     }
 }

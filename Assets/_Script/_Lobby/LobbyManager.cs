@@ -10,6 +10,7 @@ using Unity.Services.Relay.Models;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class LobbyManager : NetworkBehaviour
 {
@@ -27,12 +28,16 @@ public class LobbyManager : NetworkBehaviour
     [SerializeField] private GameObject chatPanel;
     [SerializeField] private TMP_Text chatDisplayText;
     [SerializeField] private TMP_InputField chatInputField;
+    [SerializeField] private ScrollRect chatScrollRect;
 
-    [Header("Gameplay UI")]
-    [SerializeField] private GameObject gameUI;
+    [Header("Mini Lobby UI")]
+    [SerializeField] private GameObject miniLobbyPanel;
+    [SerializeField] private TMP_Text playerListText;
+    [SerializeField] private TMP_Text playerCountText;
+    [SerializeField] private GameObject waitingForHostText;
 
     [Header("Relay Settings")]
-    [SerializeField] private int maxConnections = 4;
+    [SerializeField] private int maxConnections = 3;
 
     private const string WebGLConnectionType = "wss";
 
@@ -40,6 +45,47 @@ public class LobbyManager : NetworkBehaviour
 
     private bool isChatOpen;
     private bool servicesReady;
+
+    private readonly NetworkList<ulong> connectedPlayerIds = new();
+
+    public override void OnNetworkSpawn()
+    {
+        connectedPlayerIds.OnListChanged += HandlePlayerListChanged;
+
+        if (IsServer)
+        {
+            NetworkManager.OnClientConnectedCallback +=
+                HandleClientConnected;
+
+            NetworkManager.OnClientDisconnectCallback +=
+                HandleClientDisconnected;
+
+            foreach (ulong clientId in NetworkManager.ConnectedClientsIds)
+                AddPlayerToList(clientId);
+        }
+
+        UpdateMiniLobbyUI();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        isChatOpen = false;
+        IsChatOpen = false;
+
+        connectedPlayerIds.OnListChanged -= HandlePlayerListChanged;
+
+        if (NetworkManager != null && IsServer)
+        {
+            NetworkManager.OnClientConnectedCallback -=
+                HandleClientConnected;
+
+            NetworkManager.OnClientDisconnectCallback -=
+                HandleClientDisconnected;
+        }
+
+        if (miniLobbyPanel != null)
+            miniLobbyPanel.SetActive(false);
+    }
 
     private async void Start()
     {
@@ -83,29 +129,95 @@ public class LobbyManager : NetworkBehaviour
         {
             chatInputField.text = "";
             chatInputField.DeactivateInputField();
+            chatInputField.gameObject.SetActive(false);
         }
 
         if (chatPanel != null)
             chatPanel.SetActive(false);
 
-        if (gameUI != null)
-            gameUI.SetActive(false);
+        if (miniLobbyPanel != null)
+            miniLobbyPanel.SetActive(false);
 
         ShowCursor();
     }
 
-    private async System.Threading.Tasks.Task<bool> InitializeUnityServices()
+    private void HandleClientConnected(ulong clientId)
+    {
+        AddPlayerToList(clientId);
+    }
+
+    private void HandleClientDisconnected(ulong clientId)
+    {
+        if (connectedPlayerIds.Contains(clientId))
+            connectedPlayerIds.Remove(clientId);
+    }
+
+    private void AddPlayerToList(ulong clientId)
+    {
+        if (!connectedPlayerIds.Contains(clientId))
+            connectedPlayerIds.Add(clientId);
+    }
+
+    private void HandlePlayerListChanged(
+        NetworkListEvent<ulong> changeEvent)
+    {
+        UpdateMiniLobbyUI();
+    }
+
+    private void UpdateMiniLobbyUI()
+    {
+        if (miniLobbyPanel != null)
+            miniLobbyPanel.SetActive(true);
+
+        if (playerListText != null)
+        {
+            playerListText.text = "";
+
+            for (int i = 0; i < connectedPlayerIds.Count; i++)
+            {
+                ulong clientId = connectedPlayerIds[i];
+                string hostLabel = clientId == NetworkManager.ServerClientId ? " (Host)" : "";
+
+                if (i > 0)
+                    playerListText.text += "\n";
+                playerListText.text +=  $"Player {clientId}{hostLabel}";
+            }
+        }
+
+        if (playerCountText != null)
+        {
+            int playerCount = connectedPlayerIds.Count;
+            string playerWord = playerCount == 1
+                ? "Player"
+                : "Players";
+
+            playerCountText.text =
+                $"{playerCount}";
+        }
+
+        if (waitingForHostText != null)
+        {
+            waitingForHostText.SetActive(
+                NetworkManager != null && !NetworkManager.IsHost
+            );
+        }
+    }
+
+    private async System.Threading.Tasks.Task<bool>
+        InitializeUnityServices()
     {
         try
         {
-            if (UnityServices.State == ServicesInitializationState.Uninitialized)
+            if (UnityServices.State ==
+                ServicesInitializationState.Uninitialized)
             {
                 await UnityServices.InitializeAsync();
             }
 
             if (!AuthenticationService.Instance.IsSignedIn)
             {
-                await AuthenticationService.Instance.SignInAnonymouslyAsync();
+                await AuthenticationService.Instance
+                    .SignInAnonymouslyAsync();
             }
 
             return true;
@@ -147,11 +259,27 @@ public class LobbyManager : NetworkBehaviour
                 return;
             }
 
-            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(maxConnections);
-            string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
+            Allocation allocation =
+                await RelayService.Instance.CreateAllocationAsync(
+                    maxConnections
+                );
 
-            transport.UseWebSockets = true; transport.SetRelayServerData(AllocationUtils.ToRelayServerData(allocation, WebGLConnectionType));
+            string joinCode =
+                await RelayService.Instance.GetJoinCodeAsync(
+                    allocation.AllocationId
+                );
+
+            transport.UseWebSockets = true;
+
+            transport.SetRelayServerData(
+                AllocationUtils.ToRelayServerData(
+                    allocation,
+                    WebGLConnectionType
+                )
+            );
+
             bool started = NetworkManager.Singleton.StartHost();
+
             if (!started)
             {
                 SetStatus("Failed to start Host.");
@@ -162,12 +290,11 @@ public class LobbyManager : NetworkBehaviour
             HideLobbyPanel();
             ShowJoinCode(joinCode);
             ShowChatPanel();
-            ShowGameUI();
 
             SetStatus("Host started. Share the join code.");
             AddLocalChatMessage("System: Host started.");
 
-            HideCursor();
+            ShowCursor();
         }
         catch (Exception exception)
         {
@@ -220,10 +347,22 @@ public class LobbyManager : NetworkBehaviour
                 return;
             }
 
-            JoinAllocation joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
+            JoinAllocation joinAllocation =
+                await RelayService.Instance.JoinAllocationAsync(
+                    joinCode
+                );
+
             transport.UseWebSockets = true;
-            transport.SetRelayServerData(AllocationUtils.ToRelayServerData( joinAllocation, WebGLConnectionType));
+
+            transport.SetRelayServerData(
+                AllocationUtils.ToRelayServerData(
+                    joinAllocation,
+                    WebGLConnectionType
+                )
+            );
+
             bool started = NetworkManager.Singleton.StartClient();
+
             if (!started)
             {
                 SetStatus("Failed to start Client.");
@@ -233,12 +372,11 @@ public class LobbyManager : NetworkBehaviour
             HideJoinCode();
             HideLobbyPanel();
             ShowChatPanel();
-            ShowGameUI();
 
             SetStatus("Client started.");
             AddLocalChatMessage("System: Client joined.");
 
-            HideCursor();
+            ShowCursor();
         }
         catch (Exception exception)
         {
@@ -260,7 +398,9 @@ public class LobbyManager : NetworkBehaviour
         if (chatPanel == null || !chatPanel.activeInHierarchy)
             return;
 
-        bool enterPressed = Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame;
+        bool enterPressed =
+            Keyboard.current.enterKey.wasPressedThisFrame ||
+            Keyboard.current.numpadEnterKey.wasPressedThisFrame;
 
         if (!enterPressed)
             return;
@@ -286,8 +426,8 @@ public class LobbyManager : NetworkBehaviour
 
         ShowCursor();
 
-        chatInputField.text = "";
         chatInputField.gameObject.SetActive(true);
+        chatInputField.text = "";
         chatInputField.ActivateInputField();
         chatInputField.Select();
     }
@@ -298,12 +438,16 @@ public class LobbyManager : NetworkBehaviour
         IsChatOpen = false;
 
         if (chatInputField != null)
+        {
+            chatInputField.text = "";
             chatInputField.DeactivateInputField();
+            chatInputField.gameObject.SetActive(false);
+        }
 
         if (EventSystem.current != null)
             EventSystem.current.SetSelectedGameObject(null);
 
-        HideCursor();
+        ShowCursor();
     }
 
     public void SendChatMessage()
@@ -318,20 +462,25 @@ public class LobbyManager : NetworkBehaviour
 
         chatInputField.text = "";
 
-        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsListening)
+        if (NetworkManager.Singleton == null ||
+            !NetworkManager.Singleton.IsListening)
         {
-            SetStatus("Connect as Host or Client before sending chat.");
+            SetStatus(
+                "Connect as Host or Client before sending chat."
+            );
             return;
         }
 
         string senderName = "Player " + NetworkManager.Singleton.LocalClientId;
-        FixedString128Bytes fixedMessage = senderName + ": " + message;
+
+        FixedString128Bytes fixedMessage =
+            senderName + ": " + message;
+
         SendChatMessageRpc(fixedMessage);
     }
 
     [Rpc(SendTo.Server)]
-    private void SendChatMessageRpc(
-        FixedString128Bytes message)
+    private void SendChatMessageRpc(FixedString128Bytes message)
     {
         BroadcastChatMessageRpc(message);
     }
@@ -385,18 +534,6 @@ public class LobbyManager : NetworkBehaviour
             chatPanel.SetActive(true);
     }
 
-    private void ShowGameUI()
-    {
-        if (gameUI != null)
-            gameUI.SetActive(true);
-    }
-
-    private void HideCursor()
-    {
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-    }
-
     private void ShowCursor()
     {
         Cursor.lockState = CursorLockMode.None;
@@ -420,5 +557,11 @@ public class LobbyManager : NetworkBehaviour
             chatDisplayText.text = "Chat:";
 
         chatDisplayText.text += "\n" + message;
+
+        if (chatScrollRect != null)
+        {
+            Canvas.ForceUpdateCanvases();
+            chatScrollRect.verticalNormalizedPosition = 0f;
+        }
     }
 }

@@ -6,10 +6,10 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Finals.unity
+    path: Assets/_Scenes/MultiplayerLobby.unity
     guid: 6cce8f5bbd24af744bf8c2753bbfcea1
   - enabled: 1
-    path: Assets/Scenes/FPS_Map.unity
+    path: Assets/_Scenes/MapFPS.unity
     guid: da35ed03642cc17419fc406b84a9ebc2
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

@@ -19,6 +19,7 @@ public class Gun : MonoBehaviour
     private PlayerLook playerLook;
     private WeaponAudio weaponAudio;
     private WeaponEffects weaponEffects;
+    private WeaponVisualRecoil visualRecoil;
     private Camera cam;
     private TMP_Text ammoText;
 
@@ -43,6 +44,7 @@ public class Gun : MonoBehaviour
 
         weaponAudio = GetComponent<WeaponAudio>();
         weaponEffects = GetComponent<WeaponEffects>();
+        visualRecoil = GetComponentInChildren<WeaponVisualRecoil>();
 
         if (playerLook != null)
             cam = playerLook._cam;
@@ -111,6 +113,7 @@ public class Gun : MonoBehaviour
 
         weaponManager.RequestShoot(cam.transform.position, shootDirection, muzzlePoint.position);
 
+        visualRecoil?.Play();
         playerLook.Recoil();
         if (currentAmmo <= 0)
             TryReload();
