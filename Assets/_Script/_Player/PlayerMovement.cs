@@ -92,18 +92,19 @@ public class PlayerMovement : MonoBehaviour
 
     private void GroundCheck()
     {
+        bool sphereGrounded = false;
+
         if (groundCheckPoint != null)
         {
-            isGrounded = Physics.CheckSphere(
+            sphereGrounded = Physics.CheckSphere(
                 groundCheckPoint.position,
                 groundCheckRadius,
-                groundMask
+                groundMask,
+                QueryTriggerInteraction.Ignore
             );
         }
-        else
-        {
-            isGrounded = cc.isGrounded;
-        }
+
+        isGrounded = cc.isGrounded || sphereGrounded;
 
         if (isGrounded && velocity.y < 0f)
             velocity.y = -2f;
@@ -116,6 +117,8 @@ public class PlayerMovement : MonoBehaviour
 
     public void Jump()
     {
+        GroundCheck();
+
         if (!isGrounded)
             return;
 

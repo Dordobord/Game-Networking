@@ -8,9 +8,7 @@ public class MultiplayerGameFlow : MonoBehaviour
 {
     [Header("Game Flow")]
     [SerializeField] private string gameplaySceneName = "MapFPS";
-
-    [Header("Lobby UI")]
-    [SerializeField] private GameObject startGameButton;
+    [SerializeField] private string lobbySceneName = "MultiplayerLobby";
 
     private NetworkManager networkManager;
     private bool matchStarted;
@@ -22,9 +20,6 @@ public class MultiplayerGameFlow : MonoBehaviour
 
         networkManager.NetworkConfig.ConnectionApproval = true;
         networkManager.ConnectionApprovalCallback += ApproveConnection;
-        networkManager.OnServerStarted += HandleServerStarted;
-
-        SetStartButtonVisible(false);
     }
 
     private void OnDestroy()
@@ -33,12 +28,14 @@ public class MultiplayerGameFlow : MonoBehaviour
             return;
 
         networkManager.ConnectionApprovalCallback -= ApproveConnection;
-        networkManager.OnServerStarted -= HandleServerStarted;
 
         if (networkManager.SceneManager != null)
         {
             networkManager.SceneManager.OnLoadEventCompleted -=
                 HandleLoadEventCompleted;
+
+            networkManager.SceneManager.OnLoadEventCompleted -=
+                HandleLobbyLoadCompleted;
         }
     }
 
@@ -60,11 +57,6 @@ public class MultiplayerGameFlow : MonoBehaviour
         response.Position = null;
         response.Rotation = null;
         response.Pending = false;
-    }
-
-    private void HandleServerStarted()
-    {
-        SetStartButtonVisible(networkManager.IsHost);
     }
 
     public void StartGame()
@@ -91,8 +83,6 @@ public class MultiplayerGameFlow : MonoBehaviour
         matchStarted = true;
         waitingForSceneLoad = true;
 
-        SetStartButtonVisible(false);
-
         networkManager.SceneManager.OnLoadEventCompleted +=
             HandleLoadEventCompleted;
 
@@ -116,7 +106,47 @@ public class MultiplayerGameFlow : MonoBehaviour
         matchStarted = false;
         waitingForSceneLoad = false;
 
-        SetStartButtonVisible(networkManager.IsHost);
+    }
+
+    public void ReturnToLobby()
+    {
+        if (networkManager == null ||
+            !networkManager.IsListening ||
+            !networkManager.IsServer ||
+            waitingForSceneLoad)
+        {
+            return;
+        }
+
+        if (networkManager.SceneManager == null)
+        {
+            Debug.LogError("Netcode scene management is unavailable.");
+            return;
+        }
+
+        waitingForSceneLoad = true;
+
+        networkManager.SceneManager.OnLoadEventCompleted +=
+            HandleLobbyLoadCompleted;
+
+        SceneEventProgressStatus loadStatus =
+            networkManager.SceneManager.LoadScene(
+                lobbySceneName,
+                LoadSceneMode.Single
+            );
+
+        if (loadStatus == SceneEventProgressStatus.Started)
+            return;
+
+        networkManager.SceneManager.OnLoadEventCompleted -=
+            HandleLobbyLoadCompleted;
+
+        waitingForSceneLoad = false;
+
+        Debug.LogError(
+            $"Could not load scene '{lobbySceneName}'. " +
+            $"Status: {loadStatus}"
+        );
     }
 
     private void HandleLoadEventCompleted(
@@ -146,6 +176,30 @@ public class MultiplayerGameFlow : MonoBehaviour
             Debug.LogWarning(
                 $"Client {clientId} timed out while loading " +
                 $"{gameplaySceneName}."
+            );
+        }
+    }
+
+    private void HandleLobbyLoadCompleted(
+        string sceneName,
+        LoadSceneMode loadSceneMode,
+        List<ulong> clientsCompleted,
+        List<ulong> clientsTimedOut)
+    {
+        if (!networkManager.IsServer || sceneName != lobbySceneName)
+            return;
+
+        networkManager.SceneManager.OnLoadEventCompleted -=
+            HandleLobbyLoadCompleted;
+
+        waitingForSceneLoad = false;
+        matchStarted = false;
+
+        foreach (ulong clientId in clientsTimedOut)
+        {
+            Debug.LogWarning(
+                $"Client {clientId} timed out while returning to " +
+                $"'{lobbySceneName}'."
             );
         }
     }
@@ -194,9 +248,4 @@ public class MultiplayerGameFlow : MonoBehaviour
         );
     }
 
-    private void SetStartButtonVisible(bool visible)
-    {
-        if (startGameButton != null)
-            startGameButton.SetActive(visible);
-    }
 }

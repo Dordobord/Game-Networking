@@ -239,7 +239,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MultiplayerGameFlow
   gameplaySceneName: MapFPS
-  startGameButton: {fileID: 1317126829}
+  lobbySceneName: MultiplayerLobby
 --- !u!1 &67774508
 GameObject:
   m_ObjectHideFlags: 0
@@ -698,11 +698,12 @@ MonoBehaviour:
   chatPanel: {fileID: 781796875}
   chatDisplayText: {fileID: 1702207551}
   chatInputField: {fileID: 748618454}
-  chatScrollRect: {fileID: 0}
+  chatScrollRect: {fileID: 1287739425}
   miniLobbyPanel: {fileID: 2133182994}
   playerListText: {fileID: 1995141330}
   playerCountText: {fileID: 67774510}
   waitingForHostText: {fileID: 1223291825}
+  startGameButton: {fileID: 1317126829}
   maxConnections: 4
 --- !u!4 &176722799
 Transform:
@@ -3362,8 +3363,8 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 32915213}
-        m_TargetAssemblyTypeName: MultiplayerGameFlow, Assembly-CSharp
+      - m_Target: {fileID: 176722798}
+        m_TargetAssemblyTypeName: LobbyManager, Assembly-CSharp
         m_MethodName: StartGame
         m_Mode: 1
         m_Arguments:
@@ -3492,8 +3493,8 @@ Camera:
   m_GameObject: {fileID: 1582083052}
   m_Enabled: 1
   serializedVersion: 2
-  m_ClearFlags: 1
-  m_BackGroundColor: {r: 0.19215687, g: 0.3019608, b: 0.4745098, a: 0}
+  m_ClearFlags: 2
+  m_BackGroundColor: {r: 0.71488965, g: 0.7462962, b: 0.8018868, a: 0}
   m_projectionMatrixMode: 1
   m_GateFitMode: 2
   m_FOVAxisMode: 0

@@ -35,6 +35,7 @@ public class LobbyManager : NetworkBehaviour
     [SerializeField] private TMP_Text playerListText;
     [SerializeField] private TMP_Text playerCountText;
     [SerializeField] private GameObject waitingForHostText;
+    [SerializeField] private GameObject startGameButton;
 
     [Header("Relay Settings")]
     [SerializeField] private int maxConnections = 3;
@@ -50,6 +51,7 @@ public class LobbyManager : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
+        UpdateStartGameButtonVisibility();
         connectedPlayerIds.OnListChanged += HandlePlayerListChanged;
 
         if (IsServer)
@@ -85,10 +87,20 @@ public class LobbyManager : NetworkBehaviour
 
         if (miniLobbyPanel != null)
             miniLobbyPanel.SetActive(false);
+
+        if (startGameButton != null)
+            startGameButton.SetActive(false);
     }
 
     private async void Start()
     {
+        if (NetworkManager.Singleton != null &&
+            NetworkManager.Singleton.IsListening)
+        {
+            RestoreConnectedLobbyState();
+            return;
+        }
+
         ResetUIToLobbyState();
 
         SetStatus("Initializing Unity Services...");
@@ -97,6 +109,32 @@ public class LobbyManager : NetworkBehaviour
 
         if (servicesReady)
             SetStatus("Ready.");
+    }
+
+    private void RestoreConnectedLobbyState()
+    {
+        isChatOpen = false;
+        IsChatOpen = false;
+
+        DisableLobbyControls();
+        HideLobbyPanel();
+        HideJoinCode();
+        ShowChatPanel();
+
+        if (chatInputField != null)
+        {
+            chatInputField.text = "";
+            chatInputField.DeactivateInputField();
+            chatInputField.gameObject.SetActive(false);
+        }
+
+        if (miniLobbyPanel != null)
+            miniLobbyPanel.SetActive(true);
+
+        UpdateMiniLobbyUI();
+        UpdateStartGameButtonVisibility();
+        SetStatus("Returned to lobby.");
+        ShowCursor();
     }
 
     private void ResetUIToLobbyState()
@@ -137,6 +175,9 @@ public class LobbyManager : NetworkBehaviour
 
         if (miniLobbyPanel != null)
             miniLobbyPanel.SetActive(false);
+
+        if (startGameButton != null)
+            startGameButton.SetActive(false);
 
         ShowCursor();
     }
@@ -287,6 +328,8 @@ public class LobbyManager : NetworkBehaviour
                 return;
             }
 
+            UpdateStartGameButtonVisibility();
+
             DisableLobbyControls();
             HideLobbyPanel();
             ShowJoinCode(joinCode);
@@ -369,6 +412,8 @@ public class LobbyManager : NetworkBehaviour
                 SetStatus("Failed to start Client.");
                 return;
             }
+
+            UpdateStartGameButtonVisibility();
 
             HideJoinCode();
             HideLobbyPanel();
@@ -539,6 +584,30 @@ public class LobbyManager : NetworkBehaviour
     {
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
+    }
+
+    private void UpdateStartGameButtonVisibility()
+    {
+        bool shouldShow = NetworkManager.Singleton != null &&
+                          NetworkManager.Singleton.IsListening &&
+                          NetworkManager.Singleton.IsHost;
+
+        if (startGameButton != null)
+            startGameButton.SetActive(shouldShow);
+    }
+
+    public void StartGame()
+    {
+        MultiplayerGameFlow gameFlow =
+            NetworkManager.Singleton?.GetComponent<MultiplayerGameFlow>();
+
+        if (gameFlow == null)
+        {
+            Debug.LogError("MultiplayerGameFlow was not found.");
+            return;
+        }
+
+        gameFlow.StartGame();
     }
 
     private void SetStatus(string message)

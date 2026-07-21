@@ -118,7 +118,8 @@ public class PlayerWeaponManager : NetworkBehaviour
             PlayerHealth targetHealth = hit.collider.GetComponentInParent<PlayerHealth>();
 
             if (targetHealth != null &&
-                targetHealth != shooterHealth)
+                targetHealth != shooterHealth &&
+                !targetHealth.IsDead)
             {
                 int damageAmount = Mathf.RoundToInt(gunData.damage);
                 bool killed = targetHealth.TakeDamage(damageAmount);

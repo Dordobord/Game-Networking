@@ -23,6 +23,7 @@ public class PlayerHealth : NetworkBehaviour
     );
 
     private PlayerInputController inputController;
+    private CharacterController characterController;
     private UIPlayerRespawn respawnUI;
     private Coroutine respawnCoroutine;
 
@@ -31,15 +32,20 @@ public class PlayerHealth : NetworkBehaviour
     private void Awake()
     {
         inputController = GetComponent<PlayerInputController>();
+        characterController = GetComponent<CharacterController>();
     }
 
     public override void OnNetworkSpawn()
     {
+        isDead.OnValueChanged += HandleDeathStateChanged;
+
         if (IsServer)
         {
             currentHealth.Value = maxHealth;
             isDead.Value = false;
         }
+
+        SetPlayerAliveState(!isDead.Value);
 
         if (IsOwner)
         {
@@ -50,6 +56,8 @@ public class PlayerHealth : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        isDead.OnValueChanged -= HandleDeathStateChanged;
+
         if (respawnCoroutine != null)
         {
             StopCoroutine(respawnCoroutine);
@@ -117,6 +125,38 @@ public class PlayerHealth : NetworkBehaviour
         SetRespawningRpc(false);
     }
 
+    public void PauseForRoundEnd()
+    {
+        if (!IsServer)
+            return;
+
+        if (respawnCoroutine != null)
+        {
+            StopCoroutine(respawnCoroutine);
+            respawnCoroutine = null;
+        }
+
+        HideRespawnUIRpc();
+    }
+
+    public void ResetForNewRound()
+    {
+        if (!IsServer)
+            return;
+
+        if (respawnCoroutine != null)
+        {
+            StopCoroutine(respawnCoroutine);
+            respawnCoroutine = null;
+        }
+
+        currentHealth.Value = maxHealth;
+        isDead.Value = false;
+
+        PlayerSpawnManager.RespawnPlayer(transform);
+        SetRespawningRpc(false);
+    }
+
     [Rpc(SendTo.Owner)]
     private void ShowRespawnCountdownRpc(int secondsRemaining)
     {
@@ -124,6 +164,15 @@ public class PlayerHealth : NetworkBehaviour
             respawnUI = FindFirstObjectByType<UIPlayerRespawn>();
 
         respawnUI?.ShowCountdown(secondsRemaining);
+    }
+
+    [Rpc(SendTo.Owner)]
+    private void HideRespawnUIRpc()
+    {
+        if (respawnUI == null)
+            respawnUI = FindFirstObjectByType<UIPlayerRespawn>();
+
+        respawnUI?.Hide();
     }
 
     [Rpc(SendTo.Owner)]
@@ -148,5 +197,22 @@ public class PlayerHealth : NetworkBehaviour
     public int GetMaxHealth()
     {
         return maxHealth;
+    }
+
+    private void HandleDeathStateChanged(bool wasDead, bool nowDead)
+    {
+        SetPlayerAliveState(!nowDead);
+    }
+
+    private void SetPlayerAliveState(bool alive)
+    {
+        Renderer[] playerRenderers =
+            GetComponentsInChildren<Renderer>(true);
+
+        foreach (Renderer playerRenderer in playerRenderers)
+            playerRenderer.enabled = alive;
+
+        if (characterController != null)
+            characterController.enabled = alive;
     }
 }
