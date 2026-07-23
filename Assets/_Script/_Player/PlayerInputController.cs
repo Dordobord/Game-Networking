@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class PlayerInputController : NetworkBehaviour
 {
+    [Header("Mode")]
+    [SerializeField] private bool offlineMode;
+
     private PlayerInput playerInput;
     private PlayerInput.OnFootActions onFoot;
 
@@ -30,6 +33,16 @@ public class PlayerInputController : NetworkBehaviour
         onFoot.Disable();
     }
 
+    private void Start()
+    {
+        if (!offlineMode)
+            return;
+
+        gameplayInputAllowed = true;
+        RefreshInputState();
+        LockCursor();
+    }
+
     public override void OnNetworkSpawn()
     {
         if (!IsOwner)
@@ -51,7 +64,7 @@ public class PlayerInputController : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner)
+        if (!CanControlPlayer())
             return;
 
         bool chatOpen = LobbyManager.IsChatOpen || PlayerChat.IsChatOpen;
@@ -72,7 +85,7 @@ public class PlayerInputController : NetworkBehaviour
 
     public void SetGameplayInputEnabled(bool enabled)
     {
-        if (!IsSpawned || !IsOwner)
+        if (!CanControlPlayer())
             return;
 
         gameplayInputAllowed = enabled;
@@ -88,7 +101,7 @@ public class PlayerInputController : NetworkBehaviour
     private void RefreshInputState()
     {
         bool chatOpen = LobbyManager.IsChatOpen || PlayerChat.IsChatOpen;
-        bool shouldEnable = IsSpawned && IsOwner && gameplayInputAllowed && !chatOpen;
+        bool shouldEnable = CanControlPlayer() && gameplayInputAllowed && !chatOpen;
 
         if (shouldEnable)
             onFoot.Enable();
@@ -98,7 +111,7 @@ public class PlayerInputController : NetworkBehaviour
 
     private void OnEnable()
     {
-        if (IsSpawned && IsOwner)
+        if (offlineMode || (IsSpawned && IsOwner))
             RefreshInputState();
     }
 
@@ -111,6 +124,11 @@ public class PlayerInputController : NetworkBehaviour
     private void OnDestroy()
     {
         playerInput?.Dispose();
+    }
+
+    private bool CanControlPlayer()
+    {
+        return offlineMode || (IsSpawned && IsOwner);
     }
 
     private static void LockCursor()

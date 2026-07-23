@@ -4883,11 +4883,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3a3f97a90f4a34409626ff0d61360e9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponVisualRecoil
-  kickPosition: {x: 0, y: 0.015, z: -0.09}
-  kickRotation: {x: -12, y: 0, z: 3}
-  kickDuration: 0.06
-  kickSpeed: 35
-  returnSpeed: 11
+  kickPosition: {x: 0, y: 0.015, z: -0.08}
+  kickRotation: {x: -8, y: 2, z: 2}
+  kickDuration: 0.08
+  kickSpeed: 18
+  returnSpeed: 12
 --- !u!1 &4287716285720351576
 GameObject:
   m_ObjectHideFlags: 0

@@ -3,6 +3,9 @@ using Unity.Netcode;
 
 public class PlayerLook : NetworkBehaviour
 {
+    [Header("Mode")]
+    [SerializeField] private bool offlineMode;
+
     [Header ("Mouse Sensitivty")]
     [SerializeField]private float xSens = 2f;
     [SerializeField]private float ySens = 2f;
@@ -19,27 +22,22 @@ public class PlayerLook : NetworkBehaviour
     private Vector2 recoilVelocity;
     private float xRot = 0f;
 
+    private void Start()
+    {
+        if (offlineMode)
+            SetLocalCameraState(true);
+    }
+
     public override void OnNetworkSpawn()
     {
-        Camera playerCam = GetComponentInChildren<Camera>();
-        AudioListener playerListener = GetComponentInChildren<AudioListener>();
-
-        if (IsOwner)
-        {
-            if (playerCam != null) playerCam.enabled = true;
-
-            if (playerListener != null) playerListener.enabled = true;
-        }
-        else
-        {
-            if (playerCam != null)playerCam.enabled = false;
-
-            if (playerListener != null)playerListener.enabled = false;
-        }
+        SetLocalCameraState(IsOwner);
     }
 
     public void ProcessLook(Vector2 input)
     {
+        if (_cam == null)
+            return;
+
         float mouseX = input.x * xSens;
         float mouseY = input.y * ySens;
 
@@ -56,5 +54,20 @@ public class PlayerLook : NetworkBehaviour
     public void Recoil()
     {
         targetRecoil += new Vector2(recoilX, Random.Range(-recoilY, recoilY));
+    }
+
+    private void SetLocalCameraState(bool enabled)
+    {
+        Camera playerCam = GetComponentInChildren<Camera>(true);
+        AudioListener playerListener = GetComponentInChildren<AudioListener>(true);
+
+        if (playerCam != null)
+        {
+            playerCam.enabled = enabled;
+            _cam = playerCam;
+        }
+
+        if (playerListener != null)
+            playerListener.enabled = enabled;
     }
 }

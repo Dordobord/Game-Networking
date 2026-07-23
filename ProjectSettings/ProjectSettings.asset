@@ -12,8 +12,8 @@ PlayerSettings:
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
-  companyName: DefaultCompany
-  productName: My project (3)
+  companyName: Default Company
+  productName: FINALS GAME NETWORKING
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -929,11 +929,11 @@ PlayerSettings:
   captureStartupLogs: {}
   activeInputHandler: 2
   windowsGamepadBackendHint: 0
-  cloudProjectId: 2a91a8da-3743-4743-9469-14e54b53ed21
+  cloudProjectId: 139b6e09-df6d-428e-8f7d-2e5599540152
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: My project (3) 2026-04-27_17-18-51
-  organizationId: unity_09789c7251d7f4ffced4
+  projectName: FINALS GAME NETWORKING
+  organizationId: angelodorado1
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0
   hmiLoadingImage: {fileID: 0}

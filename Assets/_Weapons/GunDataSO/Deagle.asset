@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Deagle
   m_EditorClassIdentifier: Assembly-CSharp::GunData
   weaponName: Colt
-  damage: 50
+  damage: 40
   range: 100
-  fireRate: 1
+  fireRate: 0.45
   isAutomatic: 0
-  hipFireSpread: 0.1
+  hipFireSpread: 0.02
   magazineSize: 6
-  reloadTime: 2
+  reloadTime: 1.8
