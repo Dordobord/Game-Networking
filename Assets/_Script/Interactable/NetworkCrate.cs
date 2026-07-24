@@ -56,7 +56,6 @@ public class NetworkCrate : NetworkBehaviour
         isOpen.Value = true;
     }
 
-    // Called through Crate.FinishAnimation by the opening clip's Animation Event.
     public void FinishOpenAnimation()
     {
         if (!IsServer || !isOpen.Value || weaponSpawned)
@@ -109,8 +108,7 @@ public class NetworkCrate : NetworkBehaviour
 
     private IEnumerator WaitForWeaponPickup()
     {
-        yield return new WaitUntil(() =>
-            spawnedWeaponPickup == null || !spawnedWeaponPickup.IsSpawned);
+        yield return new WaitUntil(() => spawnedWeaponPickup == null || !spawnedWeaponPickup.IsSpawned);
 
         spawnedWeaponPickup = null;
         weaponSpawned = false;
