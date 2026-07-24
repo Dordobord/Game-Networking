@@ -109,12 +109,8 @@ public class UIScoreboard : MonoBehaviour
 
         foreach (PlayerScoreData entry in sortedScores)
         {
-            builder.Append(entry.PlayerName)
-                .Append(" - ")
-                .Append(entry.Kills)
-                .AppendLine(" kills");
+            builder.Append(entry.PlayerName).Append(" - ").Append(entry.Kills).AppendLine(" kills");
         }
-
         return builder.ToString();
     }
 }

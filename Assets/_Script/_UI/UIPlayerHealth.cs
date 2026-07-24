@@ -89,11 +89,7 @@ public class UIPlayerHealth : NetworkBehaviour
         {
             backHealthBar.color = Color.blue;
             backHealthBar.fillAmount = healthFraction;
-            frontHealthBar.fillAmount = Mathf.Lerp(
-                frontFill,
-                healthFraction,
-                smoothProgress
-            );
+            frontHealthBar.fillAmount = Mathf.Lerp(frontFill, healthFraction, smoothProgress);
         }
     }
 

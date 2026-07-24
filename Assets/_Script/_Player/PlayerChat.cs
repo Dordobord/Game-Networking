@@ -65,9 +65,7 @@ public class PlayerChat : NetworkBehaviour
         if (inputController != null && !inputController.GameplayInputAllowed)
             return;
 
-        bool enterPressed =
-            Keyboard.current.enterKey.wasPressedThisFrame ||
-            Keyboard.current.numpadEnterKey.wasPressedThisFrame;
+        bool enterPressed = Keyboard.current.enterKey.wasPressedThisFrame || Keyboard.current.numpadEnterKey.wasPressedThisFrame;
 
         if (!enterPressed)
             return;

@@ -11,7 +11,6 @@ public class LobbyReadyManager : NetworkBehaviour
     [SerializeField] private GameObject startGameBtn;
     
     private Dictionary<ulong, bool> playerReadyStates = new Dictionary<ulong, bool>();
-    //uassign long integer, bool for ready or not
 
     public override void OnNetworkSpawn()
     {

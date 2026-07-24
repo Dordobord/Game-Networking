@@ -28,33 +28,17 @@ public class WeaponVisualRecoil : MonoBehaviour
     {
         bool isKicking = kickTimer > 0f;
 
-        Vector3 targetPosition = isKicking
-            ? restingPosition + kickPosition
-            : restingPosition;
+        Vector3 targetPosition = isKicking ? restingPosition + kickPosition : restingPosition;
 
-        Quaternion targetRotation = isKicking
-            ? restingRotation * Quaternion.Euler(kickRotation)
-            : restingRotation;
+        Quaternion targetRotation = isKicking ? restingRotation * Quaternion.Euler(kickRotation) : restingRotation;
 
-        float movementSpeed = isKicking
-            ? kickSpeed
-            : returnSpeed;
+        float movementSpeed = isKicking ? kickSpeed : returnSpeed;
 
-        float interpolation = 1f - Mathf.Exp(
-            -movementSpeed * Time.deltaTime
-        );
+        float interpolation = 1f - Mathf.Exp(-movementSpeed * Time.deltaTime);
 
-        transform.localPosition = Vector3.Lerp(
-            transform.localPosition,
-            targetPosition,
-            interpolation
-        );
+        transform.localPosition = Vector3.Lerp(transform.localPosition, targetPosition, interpolation);
 
-        transform.localRotation = Quaternion.Slerp(
-            transform.localRotation,
-            targetRotation,
-            interpolation
-        );
+        transform.localRotation = Quaternion.Slerp(transform.localRotation, targetRotation, interpolation);
 
         if (isKicking)
             kickTimer -= Time.deltaTime;

@@ -20,9 +20,7 @@ public struct PlayerScoreData : INetworkSerializable, IEquatable<PlayerScoreData
 
     public bool Equals(PlayerScoreData other)
     {
-        return ClientId == other.ClientId &&
-               PlayerName.Equals(other.PlayerName) &&
-               Kills == other.Kills;
+        return ClientId == other.ClientId && PlayerName.Equals(other.PlayerName) && Kills == other.Kills;
     }
 }
 
@@ -166,9 +164,7 @@ public class GameManager : NetworkBehaviour
             bool localPlayerWon =
                 NetworkManager.Singleton.LocalClientId == winnerClientId;
 
-            winnerText.text = localPlayerWon
-                ? "YOU WIN!"
-                : $"YOU LOSE!\n{winnerName} Wins";
+            winnerText.text = localPlayerWon ? "YOU WIN!" : $"YOU LOSE!\n{winnerName} Wins";
         }
 
         Cursor.lockState = CursorLockMode.None;

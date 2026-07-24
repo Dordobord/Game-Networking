@@ -110,10 +110,7 @@ public class MultiplayerGameFlow : MonoBehaviour
 
     public void ReturnToLobby()
     {
-        if (networkManager == null ||
-            !networkManager.IsListening ||
-            !networkManager.IsServer ||
-            waitingForSceneLoad)
+        if (networkManager == null || !networkManager.IsListening || !networkManager.IsServer || waitingForSceneLoad)
         {
             return;
         }
@@ -126,14 +123,9 @@ public class MultiplayerGameFlow : MonoBehaviour
 
         waitingForSceneLoad = true;
 
-        networkManager.SceneManager.OnLoadEventCompleted +=
-            HandleLobbyLoadCompleted;
+        networkManager.SceneManager.OnLoadEventCompleted += HandleLobbyLoadCompleted;
 
-        SceneEventProgressStatus loadStatus =
-            networkManager.SceneManager.LoadScene(
-                lobbySceneName,
-                LoadSceneMode.Single
-            );
+        SceneEventProgressStatus loadStatus = networkManager.SceneManager.LoadScene(lobbySceneName,LoadSceneMode.Single);
 
         if (loadStatus == SceneEventProgressStatus.Started)
             return;
@@ -143,17 +135,10 @@ public class MultiplayerGameFlow : MonoBehaviour
 
         waitingForSceneLoad = false;
 
-        Debug.LogError(
-            $"Could not load scene '{lobbySceneName}'. " +
-            $"Status: {loadStatus}"
-        );
+        Debug.LogError($"Could not load scene '{lobbySceneName}'. " + $"Status: {loadStatus}");
     }
 
-    private void HandleLoadEventCompleted(
-        string sceneName,
-        LoadSceneMode loadSceneMode,
-        List<ulong> clientsCompleted,
-        List<ulong> clientsTimedOut)
+    private void HandleLoadEventCompleted( string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         if (!networkManager.IsServer ||
             sceneName != gameplaySceneName)
@@ -173,18 +158,11 @@ public class MultiplayerGameFlow : MonoBehaviour
 
         foreach (ulong clientId in clientsTimedOut)
         {
-            Debug.LogWarning(
-                $"Client {clientId} timed out while loading " +
-                $"{gameplaySceneName}."
-            );
+            Debug.LogWarning($"Client {clientId} timed out while loading " + $"{gameplaySceneName}.");
         }
     }
 
-    private void HandleLobbyLoadCompleted(
-        string sceneName,
-        LoadSceneMode loadSceneMode,
-        List<ulong> clientsCompleted,
-        List<ulong> clientsTimedOut)
+    private void HandleLobbyLoadCompleted(string sceneName, LoadSceneMode loadSceneMode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         if (!networkManager.IsServer || sceneName != lobbySceneName)
             return;
@@ -197,18 +175,13 @@ public class MultiplayerGameFlow : MonoBehaviour
 
         foreach (ulong clientId in clientsTimedOut)
         {
-            Debug.LogWarning(
-                $"Client {clientId} timed out while returning to " +
-                $"'{lobbySceneName}'."
-            );
+            Debug.LogWarning($"Client {clientId} timed out while returning to " + $"'{lobbySceneName}'.");
         }
     }
 
     private void SpawnPlayer(ulong clientId)
     {
-        if (!networkManager.ConnectedClients.TryGetValue(
-                clientId,
-                out NetworkClient client))
+        if (!networkManager.ConnectedClients.TryGetValue( clientId, out NetworkClient client))
         {
             return;
         }
@@ -242,10 +215,7 @@ public class MultiplayerGameFlow : MonoBehaviour
             return;
         }
 
-        playerNetworkObject.SpawnAsPlayerObject(
-            clientId,
-            destroyWithScene: true
-        );
+        playerNetworkObject.SpawnAsPlayerObject(clientId,destroyWithScene: true);
     }
 
 }

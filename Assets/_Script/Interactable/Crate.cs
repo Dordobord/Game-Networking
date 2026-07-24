@@ -11,8 +11,7 @@ public class Crate : Interactable
 
         networkCrate.RequestOpen();
     }
-
-    // Called by an Animation Event at the end of CrateOpen.
+    
     public void FinishAnimation()
     {
         networkCrate?.FinishOpenAnimation();

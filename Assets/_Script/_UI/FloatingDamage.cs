@@ -50,7 +50,6 @@ public class FloatingDamage : MonoBehaviour
             Mathf.SmoothStep(0f, 1f, t)
         );
 
-        // Fade out during the second half
         if (t >= fadeStart)
         {
             float fade = Mathf.InverseLerp(1f, fadeStart, t);

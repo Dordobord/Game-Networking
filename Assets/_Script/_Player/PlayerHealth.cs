@@ -73,11 +73,7 @@ public class PlayerHealth : NetworkBehaviour
         if (!IsServer || isDead.Value || damageAmount <= 0)
             return false;
 
-        currentHealth.Value = Mathf.Clamp(
-            currentHealth.Value - damageAmount,
-            0,
-            maxHealth
-        );
+        currentHealth.Value = Mathf.Clamp(currentHealth.Value - damageAmount, 0, maxHealth);
 
         if (currentHealth.Value > 0)
             return false;
@@ -91,11 +87,7 @@ public class PlayerHealth : NetworkBehaviour
         if (!IsServer || isDead.Value || healAmount <= 0)
             return;
 
-        currentHealth.Value = Mathf.Clamp(
-            currentHealth.Value + healAmount,
-            0,
-            maxHealth
-        );
+        currentHealth.Value = Mathf.Clamp(currentHealth.Value + healAmount, 0, maxHealth);
     }
 
     private void Die()
